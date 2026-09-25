@@ -25,3 +25,5 @@ Camera is optional. Press **Camera**, allow the webcam, hold guard 2 seconds, th
 ## Deploy
 
 Import this repo in Vercel. Vite is detected automatically. Output folder: `dist`.
+
+Live: nique-ring.vercel.app (rebuild from this repo, not the Sep 6 CLI placeholder).
