@@ -44,59 +44,9 @@ class ArenaScene extends Phaser.Scene {
   }
   drawRing() {
     const { width, height } = CONFIG.game;
-    const floor = CONFIG.arena.floorY;
     this.add.image(width / 2, height / 2, 'alley').setDisplaySize(width, height).setDepth(0);
-    const g = this.add.graphics().setDepth(1);
-    g.fillStyle(0x000000, 0.28);
-    g.fillRect(0, 0, width, height);
-    g.fillStyle(0x10151c, 1);
-    g.fillRect(0, 40, width, 220);
-    for (let i = 0; i < 28; i++) {
-      g.fillStyle(i % 3 === 0 ? 0x1c2430 : 0x151b24, 1);
-      g.fillCircle(40 + (i % 14) * 68, 70 + Math.floor(i / 14) * 46, 10);
-    }
-    g.fillStyle(0xf6e05e, 0.12);
-    g.fillTriangle(width / 2 - 180, 0, width / 2 + 180, 0, width / 2, floor);
-    g.fillStyle(0xffffff, 0.9);
-    g.fillCircle(width / 2 - 160, 28, 5);
-    g.fillCircle(width / 2, 22, 6);
-    g.fillCircle(width / 2 + 160, 28, 5);
-    g.fillStyle(0x1a2744, 1);
-    g.fillRect(70, floor - 6, width - 140, 78);
-    g.fillStyle(0x243656, 1);
-    g.fillRect(90, floor + 4, width - 180, 48);
-    g.lineStyle(2, 0xe2e8f0, 0.55);
-    g.strokeRect(100, floor + 8, width - 200, 36);
-    g.fillStyle(0x111111, 1);
-    g.fillRect(50, floor + 68, width - 100, 22);
-    g.fillStyle(0x7a1f24, 1);
-    g.fillRect(50, floor + 68, width - 100, 5);
-    g.fillStyle(0x1a202c, 1);
-    g.fillRoundedRect(62, floor - 150, 18, 210, 3);
-    g.fillRoundedRect(width - 80, floor - 150, 18, 210, 3);
-    g.fillStyle(0xc53030, 1);
-    g.fillCircle(71, floor - 150, 8);
-    g.fillCircle(width - 71, floor - 150, 8);
-    g.fillStyle(0x0b0b0b, 0.8);
-    g.fillCircle(width / 2, floor + 28, 22);
-    this.add.text(width / 2, floor + 28, 'FF', { fontFamily: 'system-ui, sans-serif', fontSize: '13px', color: '#f7fafc', fontStyle: '800' }).setOrigin(0.5).setDepth(2);
-    g.setDepth(0);
   }
-  drawRopes() {
-    const { width } = CONFIG.game;
-    const floor = CONFIG.arena.floorY;
-    const g = this.add.graphics().setDepth(6);
-    [0x9b2c2c, 0xf7fafc, 0x1a202c, 0x9b2c2c].forEach((color, i) => {
-      const y = floor - 36 - i * 28;
-      g.lineStyle(6, color, 1);
-      g.beginPath();
-      g.moveTo(78, y);
-      g.lineTo(width / 2, y + 8);
-      g.lineTo(width - 78, y);
-      g.strokePath();
-    });
-  }
-  puff(x, y, power) {
+    puff(x, y, power) {
     const g = this.dust;
     g.clear();
     g.fillStyle(0xf7fafc, 0.85);
