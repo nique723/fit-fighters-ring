@@ -18,14 +18,20 @@ class ArenaScene extends Phaser.Scene {
     this.load.image('player-body', '/sprites/player-body.png');
     this.load.image('player-slip', '/sprites/player-slip.png');
     this.load.image('dummy-idle', '/sprites/dummy-idle.png');
+    this.load.image('opp-idle', '/sprites/opp-idle.png');
+    this.load.image('opp-jab', '/sprites/opp-jab.png');
   }
   create() {
     this.nowMs = 0;
     this.cameras.main.setBackgroundColor(0x07090c);
     this.drawRing();
     const floorY = CONFIG.arena.floorY;
-    this.player = new Player(this, CONFIG.player.startX, floorY - 8);
-    this.dummy = new Dummy(this, CONFIG.dummy.startX, floorY - 8);
+    this.player = new Player(this, CONFIG.player.startX, floorY);
+    this.dummy = new Dummy(this, CONFIG.dummy.startX, floorY);
+    this.player.root.setDepth(4);
+    this.dummy.root.setDepth(4);
+    this.drawRopes();
+    this.dust = this.add.graphics().setDepth(7);
     this.audio = new AudioBus();
     this.inputBus = new InputBus();
     this.inputBus.attach();
@@ -70,19 +76,34 @@ class ArenaScene extends Phaser.Scene {
     g.fillStyle(0xc53030, 1);
     g.fillCircle(71, floor - 150, 8);
     g.fillCircle(width - 71, floor - 150, 8);
-    [0x9b2c2c, 0xf7fafc, 0x1a202c, 0x9b2c2c].forEach((color, i) => {
-      const y = floor - 28 - i * 26;
-      g.lineStyle(5, color, 1);
-      g.beginPath();
-      g.moveTo(78, y);
-      g.lineTo(width / 2, y + 6);
-      g.lineTo(width - 78, y);
-      g.strokePath();
-    });
     g.fillStyle(0x0b0b0b, 0.8);
     g.fillCircle(width / 2, floor + 28, 22);
     this.add.text(width / 2, floor + 28, 'FF', { fontFamily: 'system-ui, sans-serif', fontSize: '13px', color: '#f7fafc', fontStyle: '800' }).setOrigin(0.5).setDepth(2);
     g.setDepth(0);
+  }
+  drawRopes() {
+    const { width } = CONFIG.game;
+    const floor = CONFIG.arena.floorY;
+    const g = this.add.graphics().setDepth(6);
+    [0x9b2c2c, 0xf7fafc, 0x1a202c, 0x9b2c2c].forEach((color, i) => {
+      const y = floor - 36 - i * 28;
+      g.lineStyle(6, color, 1);
+      g.beginPath();
+      g.moveTo(78, y);
+      g.lineTo(width / 2, y + 8);
+      g.lineTo(width - 78, y);
+      g.strokePath();
+    });
+  }
+  puff(x, y, power) {
+    const g = this.dust;
+    g.clear();
+    g.fillStyle(0xf7fafc, 0.85);
+    const n = power > 0.01 ? 10 : 6;
+    for (let i = 0; i < n; i++) {
+      g.fillCircle(x - 20 + i * 5, y + 18 - (i % 3) * 6, 2 + (i % 3));
+    }
+    this.time.delayedCall(140, () => g.clear());
   }
   update(_time, delta) {
     const dt = Math.min(delta, 32);

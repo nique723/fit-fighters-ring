@@ -17,8 +17,8 @@ export class Dummy {
     this.resetMs = 0;
     this.flashMs = 0;
     this.root = scene.add.container(x, y);
-    this.sprite = scene.add.image(-6, 8, 'dummy-idle').setOrigin(0.5, 0.92);
-    this.sprite.setDisplaySize(100, 200);
+    this.sprite = scene.add.image(-4, 0, 'opp-idle').setOrigin(0.55, 1);
+    this.sprite.setDisplaySize(156, 286);
     this.sparks = scene.add.graphics();
     this.root.add([this.sprite, this.sparks]);
     scene.physics.add.existing(this.root);
@@ -77,7 +77,10 @@ export class Dummy {
     return 'idle';
   }
   paint() {
-    this.sprite.setTint(this.flashMs > 0 ? 0xffd6d6 : (this.state === 'startup' ? 0xffe0b0 : 0xffffff));
+    const key = this.state === 'active' ? 'opp-jab' : 'opp-idle';
+    if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
+    this.sprite.setDisplaySize(this.state === 'active' ? 196 : 156, 286);
+    this.sprite.setTint(this.flashMs > 0 ? 0xffffff : (this.state === 'startup' ? 0xffe0b0 : 0xffffff));
   }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;
@@ -95,6 +98,14 @@ export class Dummy {
   tickAI(delta) {
     if (this.resetMs > 0) return 'none';
     if (this.state === 'idle') {
+      const player = this.scene.player;
+      if (player) {
+        const gap = this.frontX - player.frontX;
+        if (gap > CONFIG.dummy.jabReach - 10) {
+          this.root.x -= 110 * (delta / 1000);
+          return 'none';
+        }
+      }
       this.cooldown -= delta;
       if (this.cooldown <= 0) {
         this.state = 'startup';

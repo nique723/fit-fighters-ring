@@ -18,8 +18,8 @@ export class Player {
     this.counterUntil = 0;
     this.flashMs = 0;
     this.root = scene.add.container(x, y);
-    this.sprite = scene.add.image(8, 8, 'player-idle').setOrigin(0.5, 0.92);
-    this.sprite.setDisplaySize(118, 210);
+    this.sprite = scene.add.image(6, 0, 'player-idle').setOrigin(0.45, 1);
+    this.sprite.setDisplaySize(168, 292);
     this.root.add(this.sprite);
     scene.physics.add.existing(this.root);
     const body = this.root.body;
@@ -137,7 +137,8 @@ export class Player {
       : pose === 'slip' ? 'player-slip'
       : 'player-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(pose === 'jab' || pose === 'cross' ? 150 : 118, 210);
+    this.sprite.setDisplaySize(pose === 'jab' || pose === 'cross' ? 210 : 168, 292);
+    this.sprite.setTint(this.flashMs > 0 ? 0xffe4e4 : 0xffffff);
     this.root.setAlpha(this.state === 'tired' && !this.busy ? 0.78 : 1);
   }
   regen(delta, now) {

@@ -24,7 +24,7 @@ export class Combat {
   }
 
   shake(intensity) {
-    this.scene.cameras.main.shake(140, intensity);
+    this.scene.cameras.main.shake(intensity > 0.01 ? 220 : 150, intensity * 1.6);
   }
 
   keepSeparation() {
@@ -62,6 +62,7 @@ export class Combat {
     this.dummy.flinch(type, spec.knockback);
     this.hitstop(spec.hitstop);
     this.shake(spec.shake);
+    this.scene.puff((this.player.x + this.dummy.x) / 2, this.dummy.homeY - 70, spec.shake);
     this.audio.punch(type);
 
     if (counter) {
