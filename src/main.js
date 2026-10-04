@@ -20,6 +20,7 @@ class ArenaScene extends Phaser.Scene {
     this.load.image('dummy-idle', '/sprites/dummy-idle.png');
     this.load.image('opp-idle', '/sprites/opp-idle.png');
     this.load.image('opp-jab', '/sprites/opp-jab.png');
+    this.load.image('alley', '/sprites/alley.jpg');
   }
   create() {
     this.nowMs = 0;
@@ -30,7 +31,6 @@ class ArenaScene extends Phaser.Scene {
     this.dummy = new Dummy(this, CONFIG.dummy.startX, floorY);
     this.player.root.setDepth(4);
     this.dummy.root.setDepth(4);
-    this.drawRopes();
     this.dust = this.add.graphics().setDepth(7);
     this.audio = new AudioBus();
     this.inputBus = new InputBus();
@@ -45,8 +45,9 @@ class ArenaScene extends Phaser.Scene {
   drawRing() {
     const { width, height } = CONFIG.game;
     const floor = CONFIG.arena.floorY;
-    const g = this.add.graphics();
-    g.fillStyle(0x07090c, 1);
+    this.add.image(width / 2, height / 2, 'alley').setDisplaySize(width, height).setDepth(0);
+    const g = this.add.graphics().setDepth(1);
+    g.fillStyle(0x000000, 0.28);
     g.fillRect(0, 0, width, height);
     g.fillStyle(0x10151c, 1);
     g.fillRect(0, 40, width, 220);

@@ -10,7 +10,7 @@ export const CONFIG = {
   },
 
   arena: {
-    floorY: 430,
+    floorY: 468,
     leftBound: 70,
     rightBound: 890,
     minGap: 150
@@ -47,7 +47,7 @@ export const CONFIG = {
     jabStartup: 420,
     jabActive: 160,
     jabRecovery: 200,
-    jabReach: 90
+    jabReach: 240
   },
 
   stamina: {
@@ -65,7 +65,7 @@ export const CONFIG = {
       startup: 100,
       active: 140,
       recovery: 150,
-      reach: 90,
+      reach: 250,
       damage: 3,
       staminaCost: 5,
       hitstop: 60,
@@ -76,7 +76,7 @@ export const CONFIG = {
       startup: 200,
       active: 180,
       recovery: 300,
-      reach: 80,
+      reach: 230,
       damage: 8,
       staminaCost: 15,
       hitstop: 110,
@@ -87,7 +87,7 @@ export const CONFIG = {
       startup: 180,
       active: 160,
       recovery: 280,
-      reach: 60,
+      reach: 200,
       damage: 5,
       staminaCost: 12,
       staminaDrain: 12,

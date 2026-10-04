@@ -101,7 +101,7 @@ export class Dummy {
       const player = this.scene.player;
       if (player) {
         const gap = this.root.x - player.root.x;
-        const want = 210;
+        const want = 200;
         if (gap > want + 12) {
           this.root.x -= 90 * (delta / 1000);
           return 'none';
@@ -140,7 +140,7 @@ export class Dummy {
     return 'idle';
   }
   inJabRange(player) {
-    const gap = this.frontX - player.frontX;
-    return gap <= CONFIG.dummy.jabReach && gap >= -8;
+    const gap = this.root.x - player.root.x;
+    return gap <= CONFIG.dummy.jabReach && gap >= 90;
   }
 }

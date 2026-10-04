@@ -67,12 +67,12 @@ export class Player {
   openCounter(now) { this.counterUntil = now + CONFIG.slip.counterWindow; }
   hasCounter(now) { return now < this.counterUntil; }
   consumeCounter(now) { const open = this.hasCounter(now); this.counterUntil = 0; return open; }
-  rangeTo(dummy) { return dummy.frontX - this.frontX; }
+  rangeTo(dummy) { return dummy.root.x - this.root.x; }
   inReach(dummy) {
     const spec = CONFIG.punches[this.punchType];
     if (!spec) return false;
     const gap = this.rangeTo(dummy);
-    return gap <= spec.reach && gap >= -8;
+    return gap <= spec.reach && gap >= 90;
   }
   takeDummyHit() {
     this.flashMs = CONFIG.feel.playerHitFlash;
@@ -85,7 +85,10 @@ export class Player {
       const arc = Math.sin(t * Math.PI);
       this.root.x = this.slipOriginX + CONFIG.player.slipX * arc;
       this.root.y = this.homeY + CONFIG.player.slipY * arc;
-    } else this.root.y = this.homeY;
+    } else {
+      const step = this.state === 'moving' ? Math.sin(this.scene.nowMs / 90) * 5 : 0;
+      this.root.y = this.homeY + step;
+    }
     this.root.body.setVelocityX(0);
     if (this.canAct()) {
       this.root.x += axis * CONFIG.player.moveSpeed * (delta / 1000);
