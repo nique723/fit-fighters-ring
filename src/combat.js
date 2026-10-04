@@ -28,7 +28,7 @@ export class Combat {
   }
 
   keepSeparation() {
-    const min = CONFIG.player.width / 2 + CONFIG.dummy.width / 2 + CONFIG.arena.minGap;
+    const min = CONFIG.arena.minGap;
     const gap = this.dummy.x - this.player.x;
     if (gap < min) {
       const mid = (this.dummy.x + this.player.x) / 2;

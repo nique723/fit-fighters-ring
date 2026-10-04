@@ -131,13 +131,13 @@ export class Player {
   }
   paint() {
     const pose = this.pose();
-    const key = pose === 'jab' ? 'player-jab'
-      : pose === 'cross' ? 'player-cross'
-      : pose === 'body' ? 'player-body'
-      : pose === 'slip' ? 'player-slip'
+    const throwing = pose === 'jab' || pose === 'cross' || pose === 'body' || pose === 'startup';
+    const shot = this.punchType || 'jab';
+    const key = pose === 'slip' ? 'player-slip'
+      : throwing ? ('player-' + shot)
       : 'player-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(pose === 'jab' || pose === 'cross' ? 210 : 168, 292);
+    this.sprite.setDisplaySize(throwing && shot !== 'body' ? 210 : 168, 292);
     this.sprite.setTint(this.flashMs > 0 ? 0xffe4e4 : 0xffffff);
     this.root.setAlpha(this.state === 'tired' && !this.busy ? 0.78 : 1);
   }

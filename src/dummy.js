@@ -77,9 +77,9 @@ export class Dummy {
     return 'idle';
   }
   paint() {
-    const key = this.state === 'active' ? 'opp-jab' : 'opp-idle';
+    const key = (this.state === 'active' || this.state === 'startup') ? 'opp-jab' : 'opp-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(this.state === 'active' ? 196 : 156, 286);
+    this.sprite.setDisplaySize(this.state === 'active' || this.state === 'startup' ? 196 : 156, 286);
     this.sprite.setTint(this.flashMs > 0 ? 0xffffff : (this.state === 'startup' ? 0xffe0b0 : 0xffffff));
   }
   update(delta) {
@@ -100,9 +100,14 @@ export class Dummy {
     if (this.state === 'idle') {
       const player = this.scene.player;
       if (player) {
-        const gap = this.frontX - player.frontX;
-        if (gap > CONFIG.dummy.jabReach - 10) {
-          this.root.x -= 110 * (delta / 1000);
+        const gap = this.root.x - player.root.x;
+        const want = 210;
+        if (gap > want + 12) {
+          this.root.x -= 90 * (delta / 1000);
+          return 'none';
+        }
+        if (gap < want - 20) {
+          this.root.x += 70 * (delta / 1000);
           return 'none';
         }
       }

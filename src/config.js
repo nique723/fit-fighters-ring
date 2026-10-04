@@ -13,7 +13,7 @@ export const CONFIG = {
     floorY: 430,
     leftBound: 70,
     rightBound: 890,
-    minGap: 10
+    minGap: 150
   },
 
   player: {
@@ -43,9 +43,9 @@ export const CONFIG = {
     telegraphColor: 0xed8936,
     jabColor: 0xe53e3e,
     // Dummy jab is a timing tool, not a full fighter.
-    jabInterval: 2000,
-    jabStartup: 400,
-    jabActive: 80,
+    jabInterval: 1600,
+    jabStartup: 420,
+    jabActive: 160,
     jabRecovery: 200,
     jabReach: 90
   },
@@ -63,7 +63,7 @@ export const CONFIG = {
   punches: {
     jab: {
       startup: 100,
-      active: 70,
+      active: 140,
       recovery: 150,
       reach: 90,
       damage: 3,
@@ -74,7 +74,7 @@ export const CONFIG = {
     },
     cross: {
       startup: 200,
-      active: 80,
+      active: 180,
       recovery: 300,
       reach: 80,
       damage: 8,
@@ -85,7 +85,7 @@ export const CONFIG = {
     },
     body: {
       startup: 180,
-      active: 80,
+      active: 160,
       recovery: 280,
       reach: 60,
       damage: 5,
