@@ -11,12 +11,11 @@
       #app { height: 100%; display: flex; align-items: center; justify-content: center; }
       #stage {
         position: relative;
-        width: min(100vw, calc(100dvh * 16 / 9));
-        height: min(100dvh, calc(100vw * 9 / 16));
         background: #07090c;
         overflow: hidden;
+        flex: 0 0 auto;
       }
-      #game-root, #game-root canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+      #game-root, #game-root canvas { width: 100% !important; height: 100% !important; display: block; touch-action: none; }
       #touch-controls { display: none; position: absolute; inset: 0; pointer-events: none; z-index: 20; }
       #touch-controls.visible { display: block; }
       .touch-cluster { position: absolute; bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; pointer-events: auto; }
@@ -90,6 +89,21 @@
         </div>
       </div>
     </div>
+    <script>
+      function fitStage() {
+        const stage = document.getElementById('stage');
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let w = vw;
+        let h = vw * 9 / 16;
+        if (h > vh) { h = vh; w = vh * 16 / 9; }
+        stage.style.width = Math.floor(w) + 'px';
+        stage.style.height = Math.floor(h) + 'px';
+      }
+      fitStage();
+      window.addEventListener('resize', fitStage);
+      window.addEventListener('orientationchange', () => setTimeout(fitStage, 80));
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
