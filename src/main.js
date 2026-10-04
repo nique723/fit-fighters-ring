@@ -11,6 +11,14 @@ import { CameraMode } from './camera.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
+  preload() {
+    this.load.image('player-idle', '/sprites/player-idle.png');
+    this.load.image('player-jab', '/sprites/player-jab.png');
+    this.load.image('player-cross', '/sprites/player-cross.png');
+    this.load.image('player-body', '/sprites/player-body.png');
+    this.load.image('player-slip', '/sprites/player-slip.png');
+    this.load.image('dummy-idle', '/sprites/dummy-idle.png');
+  }
   create() {
     this.nowMs = 0;
     this.cameras.main.setBackgroundColor(0x07090c);

@@ -1,5 +1,4 @@
 import { CONFIG } from './config.js';
-import { drawFighter } from './look.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping']);
 
@@ -19,8 +18,9 @@ export class Player {
     this.counterUntil = 0;
     this.flashMs = 0;
     this.root = scene.add.container(x, y);
-    this.gfx = scene.add.graphics();
-    this.root.add(this.gfx);
+    this.sprite = scene.add.image(8, 8, 'player-idle').setOrigin(0.5, 0.92);
+    this.sprite.setDisplaySize(118, 210);
+    this.root.add(this.sprite);
     scene.physics.add.existing(this.root);
     const body = this.root.body;
     body.setSize(CONFIG.player.width, CONFIG.player.height + 36);
@@ -130,7 +130,14 @@ export class Player {
     return 'idle';
   }
   paint() {
-    drawFighter(this.gfx, this.pose(), 1, 'player');
+    const pose = this.pose();
+    const key = pose === 'jab' ? 'player-jab'
+      : pose === 'cross' ? 'player-cross'
+      : pose === 'body' ? 'player-body'
+      : pose === 'slip' ? 'player-slip'
+      : 'player-idle';
+    if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
+    this.sprite.setDisplaySize(pose === 'jab' || pose === 'cross' ? 150 : 118, 210);
     this.root.setAlpha(this.state === 'tired' && !this.busy ? 0.78 : 1);
   }
   regen(delta, now) {

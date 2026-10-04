@@ -1,5 +1,4 @@
 import { CONFIG } from './config.js';
-import { drawFighter } from './look.js';
 
 export class Dummy {
   constructor(scene, x, y) {
@@ -18,9 +17,10 @@ export class Dummy {
     this.resetMs = 0;
     this.flashMs = 0;
     this.root = scene.add.container(x, y);
-    this.gfx = scene.add.graphics();
+    this.sprite = scene.add.image(-6, 8, 'dummy-idle').setOrigin(0.5, 0.92);
+    this.sprite.setDisplaySize(100, 200);
     this.sparks = scene.add.graphics();
-    this.root.add([this.gfx, this.sparks]);
+    this.root.add([this.sprite, this.sparks]);
     scene.physics.add.existing(this.root);
     const body = this.root.body;
     body.setSize(CONFIG.dummy.width, CONFIG.dummy.height + 30);
@@ -76,7 +76,9 @@ export class Dummy {
     if (this.state === 'recovery') return 'recovery';
     return 'idle';
   }
-  paint() { drawFighter(this.gfx, this.pose(), -1, 'dummy'); }
+  paint() {
+    this.sprite.setTint(this.flashMs > 0 ? 0xffd6d6 : (this.state === 'startup' ? 0xffe0b0 : 0xffffff));
+  }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;
     if (this.flashMs > 0) this.flashMs -= delta;
