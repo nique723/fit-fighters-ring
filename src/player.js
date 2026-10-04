@@ -137,11 +137,13 @@ export class Player {
     const throwing = pose === 'jab' || pose === 'cross' || pose === 'body' || pose === 'startup';
     const shot = this.punchType || 'jab';
     const key = pose === 'slip' ? 'player-slip'
+      : pose === 'hit' ? 'player-hit'
       : throwing ? ('player-' + shot)
       : 'player-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(throwing && shot !== 'body' ? 210 : 168, 292);
-    this.sprite.setTint(this.flashMs > 0 ? 0xffe4e4 : 0xffffff);
+    const wide = throwing && shot !== 'body';
+    this.sprite.setDisplaySize(wide ? 230 : 176, 300);
+    this.sprite.setTint(0xffffff);
     this.root.setAlpha(1);
   }
   regen(delta, now) {

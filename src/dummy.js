@@ -77,10 +77,11 @@ export class Dummy {
     return 'idle';
   }
   paint() {
-    const key = (this.state === 'active' || this.state === 'startup') ? 'opp-jab' : 'opp-idle';
+    const punching = this.state === 'active' || this.state === 'startup';
+    const key = this.flashMs > 0 ? 'opp-hit' : punching ? 'opp-jab' : 'opp-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(this.state === 'active' || this.state === 'startup' ? 196 : 156, 286);
-    this.sprite.setTint(this.flashMs > 0 ? 0xffffff : (this.state === 'startup' ? 0xffe0b0 : 0xffffff));
+    this.sprite.setDisplaySize(punching ? 220 : 170, 296);
+    this.sprite.setTint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
   }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;

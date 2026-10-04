@@ -17,9 +17,13 @@ class ArenaScene extends Phaser.Scene {
     this.load.image('player-cross', '/sprites/player-cross.png');
     this.load.image('player-body', '/sprites/player-body.png');
     this.load.image('player-slip', '/sprites/player-slip.png');
-    this.load.image('dummy-idle', '/sprites/dummy-idle.png');
+    this.load.image('player-hit', '/sprites/player-hit.png');
     this.load.image('opp-idle', '/sprites/opp-idle.png');
     this.load.image('opp-jab', '/sprites/opp-jab.png');
+    this.load.image('opp-cross', '/sprites/opp-cross.png');
+    this.load.image('opp-body', '/sprites/opp-body.png');
+    this.load.image('opp-slip', '/sprites/opp-slip.png');
+    this.load.image('opp-hit', '/sprites/opp-hit.png');
     this.load.image('alley', '/sprites/alley.jpg');
   }
   create() {
@@ -46,7 +50,7 @@ class ArenaScene extends Phaser.Scene {
     const { width, height } = CONFIG.game;
     this.add.image(width / 2, height / 2, 'alley').setDisplaySize(width, height).setDepth(0);
   }
-    puff(x, y, power) {
+  puff(x, y, power) {
     const g = this.dust;
     g.clear();
     g.fillStyle(0xf7fafc, 0.85);
