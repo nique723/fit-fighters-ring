@@ -78,7 +78,7 @@ const game = new Phaser.Game({
   pixelArt: false,
   antialias: true,
   fps: { target: 60, forceSetTimeOut: false },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: { mode: Phaser.Scale.ENVELOP, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
   scene: ArenaScene
 });

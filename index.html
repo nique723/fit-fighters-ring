@@ -92,13 +92,8 @@
     <script>
       function fitStage() {
         const stage = document.getElementById('stage');
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        let w = vw;
-        let h = vw * 9 / 16;
-        if (h > vh) { h = vh; w = vh * 16 / 9; }
-        stage.style.width = Math.floor(w) + 'px';
-        stage.style.height = Math.floor(h) + 'px';
+        stage.style.width = window.innerWidth + 'px';
+        stage.style.height = window.innerHeight + 'px';
       }
       fitStage();
       window.addEventListener('resize', fitStage);
