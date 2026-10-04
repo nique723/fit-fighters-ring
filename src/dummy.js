@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { drawFighter } from './look.js';
 
 export class Dummy {
   constructor(scene, x, y) {
@@ -15,16 +16,11 @@ export class Dummy {
     this.bend = 0;
     this.hitThisJab = false;
     this.resetMs = 0;
-
+    this.flashMs = 0;
     this.root = scene.add.container(x, y);
-
-    this.torso = scene.add.rectangle(0, 6, CONFIG.dummy.width, CONFIG.dummy.height, CONFIG.dummy.color);
-    this.head = scene.add.rectangle(-4, -54, 28, 28, 0xe2e8f0);
-    this.glove = scene.add.rectangle(-24, 0, 20, 16, 0xc53030);
-    this.rear = scene.add.rectangle(16, 8, 18, 16, 0x9b2c2c);
-
-    this.root.add([this.torso, this.head, this.glove, this.rear]);
-
+    this.gfx = scene.add.graphics();
+    this.sparks = scene.add.graphics();
+    this.root.add([this.gfx, this.sparks]);
     scene.physics.add.existing(this.root);
     const body = this.root.body;
     body.setSize(CONFIG.dummy.width, CONFIG.dummy.height + 30);
@@ -32,36 +28,29 @@ export class Dummy {
     body.setAllowGravity(false);
     body.setImmovable(false);
     body.setCollideWorldBounds(true);
+    this.paint();
   }
-
-  get x() {
-    return this.root.x;
-  }
-
-  get frontX() {
-    return this.root.x - CONFIG.dummy.width / 2;
-  }
-
-  get telegraphing() {
-    return this.state === 'startup';
-  }
-
-  get punching() {
-    return this.state === 'active';
-  }
-
+  get x() { return this.root.x; }
+  get frontX() { return this.root.x - CONFIG.dummy.width / 2; }
+  get telegraphing() { return this.state === 'startup'; }
+  get punching() { return this.state === 'active'; }
   flinch(kind, knockback) {
     this.knockbackVel = knockback;
-    if (kind === 'body') this.bend = CONFIG.punches.body.bend;
-    else this.bend = kind === 'cross' ? 0.08 : 0.03;
-
-    if (this.state !== 'idle') {
-      this.state = 'idle';
-      this.phaseMs = 0;
-      this.glove.x = -24;
+    this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' ? 0.12 : 0.05;
+    this.flashMs = kind === 'cross' ? 140 : 80;
+    this.burst(kind);
+    if (this.state !== 'idle') { this.state = 'idle'; this.phaseMs = 0; }
+  }
+  burst(kind) {
+    const g = this.sparks;
+    g.clear();
+    const n = kind === 'cross' ? 8 : 5;
+    g.fillStyle(kind === 'body' ? 0xf6ad55 : 0xf7fafc, 0.9);
+    for (let i = 0; i < n; i++) {
+      const a = -0.4 - i * 0.2;
+      g.fillCircle(Math.cos(a) * (12 + i * 4), Math.sin(a) * 8 - 10, 2 + (i % 2));
     }
   }
-
   resetRing() {
     this.health = CONFIG.dummy.maxHealth;
     this.stamina = CONFIG.stamina.max;
@@ -73,45 +62,36 @@ export class Dummy {
     this.root.x = this.homeX;
     this.root.rotation = 0;
     this.resetMs = CONFIG.feel.dummyResetHold;
+    this.sparks.clear();
   }
-
   takeHit(damage, staminaDrain = 0) {
     this.health = Math.max(0, this.health - damage);
     this.stamina = Math.max(0, this.stamina - staminaDrain);
     return this.health <= 0;
   }
-
+  pose() {
+    if (this.flashMs > 0) return 'hit';
+    if (this.state === 'startup') return 'telegraph';
+    if (this.state === 'active') return 'jab';
+    if (this.state === 'recovery') return 'recovery';
+    return 'idle';
+  }
+  paint() { drawFighter(this.gfx, this.pose(), -1, 'dummy'); }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;
-
+    if (this.flashMs > 0) this.flashMs -= delta;
+    else this.sparks.clear();
     this.root.x += this.knockbackVel;
     this.knockbackVel *= 0.82;
     if (Math.abs(this.knockbackVel) < 0.2) this.knockbackVel = 0;
-
     this.bend *= 0.86;
     this.root.rotation = this.bend;
     this.root.x = Phaser.Math.Clamp(this.root.x, CONFIG.arena.leftBound + 80, CONFIG.arena.rightBound);
     this.root.y = this.homeY;
-
-    if (this.state === 'startup') {
-      const on = Math.sin(this.phaseMs / 50) > 0;
-      this.torso.setFillStyle(on ? CONFIG.dummy.telegraphColor : CONFIG.dummy.color);
-      this.glove.x = -30;
-    } else if (this.state === 'active') {
-      this.torso.setFillStyle(CONFIG.dummy.jabColor);
-      this.glove.x = -52;
-    } else if (this.state === 'recovery') {
-      this.torso.setFillStyle(0x718096);
-      this.glove.x = -20;
-    } else {
-      this.torso.setFillStyle(CONFIG.dummy.color);
-      this.glove.x = -24;
-    }
+    this.paint();
   }
-
   tickAI(delta) {
     if (this.resetMs > 0) return 'none';
-
     if (this.state === 'idle') {
       this.cooldown -= delta;
       if (this.cooldown <= 0) {
@@ -124,30 +104,23 @@ export class Dummy {
       }
       return 'none';
     }
-
     this.phaseMs += delta;
-    if (this.phaseMs < this.phaseDuration) {
-      return this.state === 'active' ? 'active' : this.state;
-    }
-
+    if (this.phaseMs < this.phaseDuration) return this.state === 'active' ? 'active' : this.state;
     if (this.state === 'startup') {
       this.state = 'active';
       this.phaseMs = 0;
       this.phaseDuration = CONFIG.dummy.jabActive;
       return 'became-active';
     }
-
     if (this.state === 'active') {
       this.state = 'recovery';
       this.phaseMs = 0;
       this.phaseDuration = CONFIG.dummy.jabRecovery;
       return this.hitThisJab ? 'jab-landed' : 'jab-whiff';
     }
-
     this.state = 'idle';
     return 'idle';
   }
-
   inJabRange(player) {
     const gap = this.frontX - player.frontX;
     return gap <= CONFIG.dummy.jabReach && gap >= -8;
