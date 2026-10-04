@@ -142,7 +142,7 @@ export class Player {
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
     this.sprite.setDisplaySize(throwing && shot !== 'body' ? 210 : 168, 292);
     this.sprite.setTint(this.flashMs > 0 ? 0xffe4e4 : 0xffffff);
-    this.root.setAlpha(this.state === 'tired' && !this.busy ? 0.78 : 1);
+    this.root.setAlpha(1);
   }
   regen(delta, now) {
     if (this.busy) return;
