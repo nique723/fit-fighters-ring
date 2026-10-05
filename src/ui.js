@@ -52,7 +52,7 @@ export class UI {
       .setOrigin(0.5, 0);
 
     this.sub = scene.add
-      .text(w / 2, 36, 'RING PROTO', {
+      .text(w / 2, 36, 'ALLEY', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '10px',
         color: '#a0aec0',
