@@ -43,9 +43,14 @@ class ArenaScene extends Phaser.Scene {
     this.ui = new UI(this);
     this.combat = new Combat(this, this.player, this.dummy, this.audio, this.stats, this.ui);
     this.cameraMode = new CameraMode(this.inputBus, this.stats);
-    this.input.once('pointerdown', () => this.audio.ensure());
-    document.addEventListener('pointerdown', () => this.audio.ensure(), { once: true });
-    window.addEventListener('keydown', () => this.audio.ensure(), { once: true });
+    const unlock = () => {
+      const state = this.audio.test();
+      const btn = document.getElementById('sound-test');
+      if (btn) { btn.textContent = state === 'running' ? 'Sound on' : 'Tap sound'; btn.classList.toggle('on', state === 'running'); }
+    };
+    document.getElementById('sound-test').addEventListener('pointerdown', (e) => { e.preventDefault(); unlock(); });
+    document.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
   }
   drawRing() {
     const { width, height } = CONFIG.game;

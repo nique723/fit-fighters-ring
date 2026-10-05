@@ -16,13 +16,8 @@ export class AudioBus {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx = new Ctx();
     const master = ctx.createGain();
-    master.gain.value = 0.9;
-    const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -18;
-    comp.knee.value = 12;
-    comp.ratio.value = 3;
-    master.connect(comp);
-    comp.connect(ctx.destination);
+    master.gain.value = 1;
+    master.connect(ctx.destination);
     this.ctx = ctx;
     this.master = master;
     return ctx;
@@ -118,5 +113,11 @@ export class AudioBus {
   knockdown() {
     this.tone({ freq: 80, freqEnd: 32, dur: 0.45, type: 'sine', gain: 0.5, filterFreq: 200 });
     this.noise({ dur: 0.25, gain: 0.2, filterFreq: 180, filterType: 'lowpass' });
+  }
+
+  test() {
+    this.ensure();
+    this.punch('cross');
+    return this.ctx ? this.ctx.state : 'none';
   }
 }
