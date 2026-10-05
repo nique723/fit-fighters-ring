@@ -53,6 +53,8 @@ export class Combat {
 
     this.player.connectedThisPunch = true;
     this.stats.landed[type] += 1;
+    this.stats.points += CONFIG.score.points[type] || 0;
+    if (counter) this.stats.points += CONFIG.score.points.counter;
 
     const mul = counter ? CONFIG.slip.counterDamageMul : 1;
     const damage = spec.damage * mul;
@@ -73,6 +75,7 @@ export class Combat {
 
     if (dead) {
       this.stats.dummyKnockdowns += 1;
+      this.stats.points += CONFIG.score.points.knockdown;
       this.audio.knockdown();
       const next = CONFIG.styles[(this.dummy.styleIndex + 1) % CONFIG.styles.length].name;
       this.ui.showGrade(this.stats, this.dummy.style.name, next, () => this.dummy.nextStyle());
@@ -93,11 +96,20 @@ export class Combat {
     if (this.dummy.inJabRange(this.player)) {
       this.dummy.hitThisJab = true;
       this.stats.dummyJabsLanded += 1;
+      this.stats.points = Math.max(0, this.stats.points + CONFIG.score.points.hit);
       this.player.takeDummyHit();
       this.hitstop(50);
       this.shake(0.003);
       this.audio.dummyHit();
     }
+  }
+
+  tickRound(delta) {
+    this.stats.roundMs -= delta;
+    if (this.stats.roundMs > 0) return;
+    this.stats.level += 1;
+    this.stats.roundMs = CONFIG.score.roundMs;
+    this.dummy.level = this.stats.level;
   }
 
   update(delta, input) {
@@ -130,6 +142,7 @@ export class Combat {
 
     this.player.update(delta, input.axis());
     this.player.regen(delta, this.scene.nowMs);
+    this.tickRound(delta);
     this.dummy.update(delta);
     this.keepSeparation();
   }

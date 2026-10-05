@@ -10,7 +10,7 @@ export class Dummy {
     this.state = 'idle';
     this.phaseMs = 0;
     this.phaseDuration = 0;
-    this.cooldown = CONFIG.dummy.jabInterval;
+    this.cooldown = Math.max(700, CONFIG.dummy.jabInterval - this.level * 120);
     this.knockbackVel = 0;
     this.bend = 0;
     this.hitThisJab = false;
@@ -18,6 +18,7 @@ export class Dummy {
     this.flashMs = 0;
     this.styleIndex = 0;
     this.punchType = 'jab';
+    this.level = 1;
     this.root = scene.add.container(x, y);
     this.sprite = scene.add.image(-4, 0, 'opp-idle').setOrigin(0.55, 1);
     this.sprite.setDisplaySize(156, 286);
@@ -62,7 +63,7 @@ export class Dummy {
     this.stamina = CONFIG.stamina.max;
     this.state = 'idle';
     this.phaseMs = 0;
-    this.cooldown = CONFIG.dummy.jabInterval;
+    this.cooldown = Math.max(700, CONFIG.dummy.jabInterval - this.level * 120);
     this.knockbackVel = 0;
     this.bend = 0;
     this.root.x = this.homeX;
@@ -121,7 +122,7 @@ export class Dummy {
         const gap = this.root.x - player.root.x;
         const want = 230 - this.style.step * 0.4;
         if (gap > want + 12) {
-          this.root.x -= 90 * (delta / 1000);
+          this.root.x -= (90 + this.level * 14) * (delta / 1000);
           return 'none';
         }
         if (gap < want - 20) {
@@ -134,9 +135,9 @@ export class Dummy {
         this.pickPunch(player ? this.root.x - player.root.x : 200);
         this.state = 'startup';
         this.phaseMs = 0;
-        this.phaseDuration = CONFIG.dummy.jabStartup;
+        this.phaseDuration = Math.max(180, CONFIG.dummy.jabStartup - this.level * 28);
         this.hitThisJab = false;
-        this.cooldown = CONFIG.dummy.jabInterval;
+        this.cooldown = Math.max(700, CONFIG.dummy.jabInterval - this.level * 120);
         return 'telegraph';
       }
       return 'none';

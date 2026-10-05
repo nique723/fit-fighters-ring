@@ -60,6 +60,13 @@ export class UI {
       })
       .setOrigin(0.5, 0);
 
+    this.scoreText = scene.add.text(w / 2, 52, '0 PTS', {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '16px',
+      color: '#f6e05e',
+      fontStyle: '800'
+    }).setOrigin(0.5, 0);
+
     this.grade = scene.add.text(w / 2, 210, '', {
       fontFamily: 'system-ui, sans-serif',
       fontSize: '18px',
@@ -123,6 +130,9 @@ export class UI {
     this.drawBar(this.dHp, this.dHpBg, dummy.health / CONFIG.dummy.maxHealth);
     this.drawBar(this.dSt, this.dStBg, dummy.stamina / CONFIG.stamina.max);
     if (dummy.style) this.dLabel.setText(dummy.style.name);
+    const left = Math.ceil((stats.roundMs || 0) / 1000);
+    this.sub.setText('LV ' + (stats.level || 1) + '  ·  0:' + String(left).padStart(2, '0'));
+    this.scoreText.setText((stats.points || 0) + ' PTS');
 
     if (this.debugOn) {
       this.overlay.textContent = formatStats(stats, {

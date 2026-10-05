@@ -13,6 +13,9 @@ export function createStats() {
     dummyJabsThrown: 0,
     dummyJabsLanded: 0,
     dummyKnockdowns: 0,
+    points: 0,
+    level: 1,
+    roundMs: 30000,
     camera: {
       confidence: 0,
       missedFrames: 0,
