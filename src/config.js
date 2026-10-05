@@ -96,6 +96,18 @@ export const CONFIG = {
       knockback: 8,
       bend: 0.28,
       shake: 0.007
+    },
+    upper: {
+      startup: 170,
+      active: 150,
+      recovery: 260,
+      reach: 150, minReach: 90, // inside, under the chin
+      damage: 7,
+      staminaCost: 14,
+      hitstop: 100,
+      knockback: 6,
+      bend: -0.16,
+      shake: 0.01
     }
   },
 

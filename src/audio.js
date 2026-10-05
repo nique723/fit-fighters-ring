@@ -76,6 +76,11 @@ export class AudioBus {
       this.tone({ freq: 210, freqEnd: 90, dur: 0.06, type: 'triangle', gain: 0.22, filterFreq: 900 });
       return;
     }
+    if (type === 'upper') {
+      this.tone({ freq: 140, freqEnd: 280, dur: 0.12, type: 'triangle', gain: 0.34, filterFreq: 700 });
+      this.noise({ dur: 0.07, gain: 0.3, filterFreq: 480, q: 0.6 });
+      return;
+    }
     if (type === 'cross') {
       this.tone({ freq: 95, freqEnd: 38, dur: 0.2, type: 'sine', gain: 0.55, filterFreq: 240 });
       this.noise({ dur: 0.09, gain: 0.42, filterFreq: 520, q: 0.5 });

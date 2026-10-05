@@ -17,6 +17,7 @@ class ArenaScene extends Phaser.Scene {
     this.load.image('player-cross', '/sprites/player-cross.png');
     this.load.image('player-body', '/sprites/player-body.png');
     this.load.image('player-slip', '/sprites/player-slip.png');
+    this.load.image('player-upper', '/sprites/player-upper.png');
     this.load.image('player-hit', '/sprites/player-hit.png');
     this.load.image('opp-idle', '/sprites/opp-idle.png');
     this.load.image('opp-jab', '/sprites/opp-jab.png');

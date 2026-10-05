@@ -73,13 +73,14 @@ export class UI {
 
   showGrade(stats, beaten, next, done) {
     const pct = (l, t) => t ? Math.round((l / t) * 100) + '%' : '—';
-    const thrown = stats.thrown.jab + stats.thrown.cross + stats.thrown.body;
-    const landed = stats.landed.jab + stats.landed.cross + stats.landed.body;
+    const thrown = stats.thrown.jab + stats.thrown.cross + stats.thrown.body + stats.thrown.upper;
+    const landed = stats.landed.jab + stats.landed.cross + stats.landed.body + stats.landed.upper;
     this.grade.setText([
       beaten + ' DOWN',
       'Jab ' + pct(stats.landed.jab, stats.thrown.jab),
       'Cross ' + pct(stats.landed.cross, stats.thrown.cross),
       'Body ' + pct(stats.landed.body, stats.thrown.body),
+      'Upper ' + pct(stats.landed.upper, stats.thrown.upper),
       'Landed ' + landed + '/' + thrown + '   Counters ' + stats.countersLanded,
       'Next: ' + next
     ].join('\n')).setAlpha(1);

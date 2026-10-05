@@ -138,7 +138,7 @@ export class Player {
   }
   paint() {
     const pose = this.pose();
-    const throwing = pose === 'jab' || pose === 'cross' || pose === 'body' || pose === 'startup';
+    const throwing = pose === 'jab' || pose === 'cross' || pose === 'body' || pose === 'upper' || pose === 'startup';
     const shot = this.punchType || 'jab';
     const key = pose === 'slip' ? 'player-slip'
       : pose === 'hit' ? 'player-hit'
