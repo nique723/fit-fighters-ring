@@ -7,6 +7,7 @@ export class InputBus {
     this.held = { left: false, right: false };
     this.queued = { jab: false, cross: false, body: false, slip: false };
     this.debugPressed = false;
+    this.instant = false;
     this.isTouch = false;
 
     this._onKeyDown = this.onKeyDown.bind(this);
@@ -58,9 +59,12 @@ export class InputBus {
     );
   }
 
-  press(action) {
+  press(action, instant) {
     if (action === 'left' || action === 'right') this.held[action] = true;
-    else if (action in this.queued) this.queued[action] = true;
+    else if (action in this.queued) {
+      this.queued[action] = true;
+      if (instant) this.instant = true;
+    }
   }
 
   release(action) {
@@ -88,6 +92,12 @@ export class InputBus {
     if (k === 'd' || e.code === 'ArrowRight') this.held.right = false;
   }
 
+  takeInstant() {
+    const on = this.instant;
+    this.instant = false;
+    return on;
+  }
+
   consumePunch() {
     if (this.queued.jab) {
       this.queued.jab = false;
@@ -113,6 +123,7 @@ export class InputBus {
   consumeDebugToggle() {
     if (!this.debugPressed) return false;
     this.debugPressed = false;
+    this.instant = false;
     return true;
   }
 

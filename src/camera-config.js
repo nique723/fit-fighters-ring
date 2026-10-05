@@ -44,10 +44,10 @@ export const CAMERA_CONFIG = {
   },
 
   punch: {
-    elbowStraightDeg: 150,
+    elbowStraightDeg: 150, // classifies body vs head, not the trigger
     // wrist speed away from shoulder, normalized widths per second
-    extendSpeed: 1.15,
-    minReach: 0.62, // vs calibrated arm length
+    extendSpeed: 0.72, // fire when the wrist leaves, not when the arm is straight
+    minReach: 0.42, // onset, not full extension
     retractReset: 0.48
   },
 
@@ -59,8 +59,8 @@ export const CAMERA_CONFIG = {
   },
 
   cooldownMs: {
-    lead: 280,
-    rear: 320,
+    lead: 160,
+    rear: 180,
     slip: 420
   },
 

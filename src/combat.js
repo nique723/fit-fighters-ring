@@ -110,7 +110,8 @@ export class Combat {
     }
 
     const punch = input.consumePunch();
-    if (punch && this.player.tryPunch(punch)) {
+    const instant = input.takeInstant();
+    if (punch && this.player.tryPunch(punch, instant)) {
       this.stats.thrown[punch] += 1;
     }
 

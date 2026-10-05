@@ -306,7 +306,7 @@ export class CameraMode {
       this.phase = 'live';
       this.els.cal?.classList.remove('show');
       this.status = 'Live — jab / cross / body / slip';
-      this.input.press('jab');
+      this.input.press('jab', true);
       this.stats.camera.lastAction = 'jab';
     }
   }
@@ -319,14 +319,14 @@ export class CameraMode {
     if (lead) {
       const kind = this.punchSignal(lead, 'lead', dt, now);
       if (kind) {
-        this.input.press(kind === 'body' ? 'body' : 'jab');
+        this.input.press(kind === 'body' ? 'body' : 'jab', true);
         this.stats.camera.lastAction = kind === 'body' ? 'body' : 'jab';
       }
     }
     if (rear) {
       const kind = this.punchSignal(rear, 'rear', dt, now);
       if (kind) {
-        this.input.press(kind === 'body' ? 'body' : 'cross');
+        this.input.press(kind === 'body' ? 'body' : 'cross', true);
         this.stats.camera.lastAction = kind === 'body' ? 'body' : 'cross';
       }
     }
@@ -347,14 +347,12 @@ export class CameraMode {
     }
     if (reachN < C.punch.retractReset) this.armOut[which] = false;
     if (this.armOut[which]) return null;
-    const firing =
-      extendVel > C.punch.extendSpeed &&
-      angle >= C.punch.elbowStraightDeg &&
-      reachN >= C.punch.minReach;
+    const firing = extendVel > C.punch.extendSpeed && reachN >= C.punch.minReach;
     if (!firing) return null;
     this.armOut[which] = true;
     this.cool[which] = now + C.cooldownMs[which];
-    return arm.w.y > arm.s.y + 0.02 ? 'body' : 'punch';
+    const body = arm.w.y > arm.s.y + 0.04 && angle < C.punch.elbowStraightDeg;
+    return body ? 'body' : 'punch';
   }
 
   detectSlip(pack, now) {
@@ -371,7 +369,7 @@ export class CameraMode {
       this.slipLatched = false;
       if (held >= C.slip.minAwayMs && held <= C.slip.returnMs) {
         this.cool.slip = now + C.cooldownMs.slip;
-        this.input.press('slip');
+        this.input.press('slip', true);
         this.stats.camera.lastAction = 'slip';
       }
     }

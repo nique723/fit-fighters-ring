@@ -40,7 +40,7 @@ export class Player {
   scaled(ms) { return ms * this.timeScale(); }
   canAct() { return this.state === 'idle' || this.state === 'moving' || this.state === 'tired'; }
   spendStamina(cost) { this.stamina = Math.max(0, this.stamina - cost); this.lastActionAt = this.scene.nowMs; }
-  tryPunch(type) {
+  tryPunch(type, instant) {
     const spec = CONFIG.punches[type];
     if (!this.canAct() || this.stamina < spec.staminaCost) return false;
     this.spendStamina(spec.staminaCost);
@@ -49,7 +49,7 @@ export class Player {
     this.connectedThisPunch = false;
     this.state = 'startup';
     this.phaseMs = 0;
-    this.phaseDuration = this.scaled(spec.startup);
+    this.phaseDuration = instant ? 0 : this.scaled(spec.startup);
     this.root.body.setVelocityX(0);
     return true;
   }
