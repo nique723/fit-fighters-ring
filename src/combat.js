@@ -109,9 +109,10 @@ export class Combat {
       return;
     }
 
-    const punch = input.consumePunch();
-    const instant = input.takeInstant();
+    const punch = input.peekPunch();
+    const instant = punch ? input.takeInstant() : false;
     if (punch && this.player.tryPunch(punch, instant)) {
+      input.consumePunch();
       this.stats.thrown[punch] += 1;
     }
 

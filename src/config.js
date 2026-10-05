@@ -55,7 +55,8 @@ export const CONFIG = {
     regenPerSec: 12,
     regenDelay: 600,
     tiredThreshold: 20,
-    tiredSlowdown: 0.4 // 40% slower startups + recoveries
+    tiredSlowdown: 0.4, // 40% slower startups + recoveries
+    comboLink: 0.4 // next punch can start this far into recovery
   },
 
   // Active windows were missing from the original spec.

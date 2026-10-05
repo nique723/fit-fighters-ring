@@ -98,6 +98,13 @@ export class InputBus {
     return on;
   }
 
+  peekPunch() {
+    if (this.queued.jab) return 'jab';
+    if (this.queued.cross) return 'cross';
+    if (this.queued.body) return 'body';
+    return null;
+  }
+
   consumePunch() {
     if (this.queued.jab) {
       this.queued.jab = false;

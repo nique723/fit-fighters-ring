@@ -39,10 +39,14 @@ export class Player {
   timeScale() { return this.tired ? 1 + CONFIG.stamina.tiredSlowdown : 1; }
   scaled(ms) { return ms * this.timeScale(); }
   canAct() { return this.state === 'idle' || this.state === 'moving' || this.state === 'tired'; }
+  canLink() {
+    if (this.state !== 'recovery') return false;
+    return this.phaseMs >= this.phaseDuration * CONFIG.stamina.comboLink;
+  }
   spendStamina(cost) { this.stamina = Math.max(0, this.stamina - cost); this.lastActionAt = this.scene.nowMs; }
   tryPunch(type, instant) {
     const spec = CONFIG.punches[type];
-    if (!this.canAct() || this.stamina < spec.staminaCost) return false;
+    if (!(this.canAct() || this.canLink()) || this.stamina < spec.staminaCost) return false;
     this.spendStamina(spec.staminaCost);
     this.punchType = type;
     this.hitThisPunch = false;
