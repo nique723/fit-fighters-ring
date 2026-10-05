@@ -44,6 +44,7 @@ class ArenaScene extends Phaser.Scene {
     this.combat = new Combat(this, this.player, this.dummy, this.audio, this.stats, this.ui);
     this.cameraMode = new CameraMode(this.inputBus, this.stats);
     this.input.once('pointerdown', () => this.audio.ensure());
+    document.addEventListener('pointerdown', () => this.audio.ensure(), { once: true });
     window.addEventListener('keydown', () => this.audio.ensure(), { once: true });
   }
   drawRing() {
