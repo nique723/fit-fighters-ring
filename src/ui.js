@@ -15,7 +15,7 @@ export class UI {
       color: '#90cdf4',
       fontStyle: '700'
     });
-    this.dLabel = scene.add.text(w - 24, 16, 'DUMMY', {
+    this.dLabel = scene.add.text(w - 24, 16, 'JABBER', {
       fontFamily: 'system-ui, sans-serif',
       fontSize: '12px',
       color: '#feb2b2',
@@ -59,6 +59,34 @@ export class UI {
         fontStyle: '700'
       })
       .setOrigin(0.5, 0);
+
+    this.grade = scene.add.text(w / 2, 210, '', {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '18px',
+      color: '#f7fafc',
+      fontStyle: '700',
+      align: 'center',
+      backgroundColor: '#0b0d12',
+      padding: { x: 18, y: 14 }
+    }).setOrigin(0.5).setAlpha(0).setDepth(20);
+  }
+
+  showGrade(stats, beaten, next, done) {
+    const pct = (l, t) => t ? Math.round((l / t) * 100) + '%' : '—';
+    const thrown = stats.thrown.jab + stats.thrown.cross + stats.thrown.body;
+    const landed = stats.landed.jab + stats.landed.cross + stats.landed.body;
+    this.grade.setText([
+      beaten + ' DOWN',
+      'Jab ' + pct(stats.landed.jab, stats.thrown.jab),
+      'Cross ' + pct(stats.landed.cross, stats.thrown.cross),
+      'Body ' + pct(stats.landed.body, stats.thrown.body),
+      'Landed ' + landed + '/' + thrown + '   Counters ' + stats.countersLanded,
+      'Next: ' + next
+    ].join('\n')).setAlpha(1);
+    this.scene.time.delayedCall(2200, () => {
+      this.grade.setAlpha(0);
+      done();
+    });
   }
 
   toggleDebug() {
@@ -93,6 +121,7 @@ export class UI {
 
     this.drawBar(this.dHp, this.dHpBg, dummy.health / CONFIG.dummy.maxHealth);
     this.drawBar(this.dSt, this.dStBg, dummy.stamina / CONFIG.stamina.max);
+    if (dummy.style) this.dLabel.setText(dummy.style.name);
 
     if (this.debugOn) {
       this.overlay.textContent = formatStats(stats, {

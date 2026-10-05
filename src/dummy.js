@@ -16,6 +16,8 @@ export class Dummy {
     this.hitThisJab = false;
     this.resetMs = 0;
     this.flashMs = 0;
+    this.styleIndex = 0;
+    this.punchType = 'jab';
     this.root = scene.add.container(x, y);
     this.sprite = scene.add.image(-4, 0, 'opp-idle').setOrigin(0.55, 1);
     this.sprite.setDisplaySize(156, 286);
@@ -37,7 +39,7 @@ export class Dummy {
   flinch(kind, knockback) {
     this.knockbackVel = knockback;
     this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' ? 0.12 : 0.05;
-    this.flashMs = kind === 'cross' ? 140 : 80;
+    this.flashMs = CONFIG.feel.hitPoseMs;
     this.burst(kind);
     if (this.state !== 'idle') { this.state = 'idle'; this.phaseMs = 0; }
   }
@@ -50,6 +52,10 @@ export class Dummy {
       const a = -0.4 - i * 0.2;
       g.fillCircle(Math.cos(a) * (12 + i * 4), Math.sin(a) * 8 - 10, 2 + (i % 2));
     }
+  }
+  nextStyle() {
+    this.styleIndex = (this.styleIndex + 1) % CONFIG.styles.length;
+    this.resetRing();
   }
   resetRing() {
     this.health = CONFIG.dummy.maxHealth;
@@ -76,11 +82,22 @@ export class Dummy {
     if (this.state === 'recovery') return 'recovery';
     return 'idle';
   }
+  get style() { return CONFIG.styles[this.styleIndex % CONFIG.styles.length]; }
+  pickPunch(gap) {
+    const w = this.style.weight;
+    const roll = Math.random();
+    let type = roll < w.jab ? 'jab' : roll < w.jab + w.cross ? 'cross' : 'body';
+    if (type === 'body' && gap > 190) type = 'jab';
+    if (type === 'cross' && gap > 230) type = 'jab';
+    this.punchType = type;
+    return type;
+  }
   paint() {
     const punching = this.state === 'active' || this.state === 'startup';
-    const key = this.flashMs > 0 ? 'opp-hit' : punching ? 'opp-jab' : 'opp-idle';
+    const shot = this.punchType || 'jab';
+    const key = this.flashMs > 0 ? 'opp-hit' : punching ? ('opp-' + shot) : 'opp-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(punching ? 220 : 170, 296);
+    this.sprite.setDisplaySize(punching ? 230 : 170, 296);
     this.sprite.setTint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
   }
   update(delta) {
@@ -102,7 +119,7 @@ export class Dummy {
       const player = this.scene.player;
       if (player) {
         const gap = this.root.x - player.root.x;
-        const want = 200;
+        const want = 230 - this.style.step * 0.4;
         if (gap > want + 12) {
           this.root.x -= 90 * (delta / 1000);
           return 'none';
@@ -114,6 +131,7 @@ export class Dummy {
       }
       this.cooldown -= delta;
       if (this.cooldown <= 0) {
+        this.pickPunch(player ? this.root.x - player.root.x : 200);
         this.state = 'startup';
         this.phaseMs = 0;
         this.phaseDuration = CONFIG.dummy.jabStartup;
@@ -142,6 +160,7 @@ export class Dummy {
   }
   inJabRange(player) {
     const gap = this.root.x - player.root.x;
-    return gap <= CONFIG.dummy.jabReach && gap >= 90;
+    const reach = CONFIG.punches[this.punchType || "jab"].reach;
+    return gap <= reach && gap >= 100;
   }
 }

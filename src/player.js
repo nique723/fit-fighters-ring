@@ -72,10 +72,10 @@ export class Player {
     const spec = CONFIG.punches[this.punchType];
     if (!spec) return false;
     const gap = this.rangeTo(dummy);
-    return gap <= spec.reach && gap >= 90;
+    return gap <= spec.reach && gap >= (spec.minReach || 90);
   }
   takeDummyHit() {
-    this.flashMs = CONFIG.feel.playerHitFlash;
+    this.flashMs = CONFIG.feel.hitPoseMs;
     this.root.x = Math.max(CONFIG.arena.leftBound, this.root.x - 8);
   }
   update(delta, axis) {

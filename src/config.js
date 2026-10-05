@@ -47,7 +47,7 @@ export const CONFIG = {
     jabStartup: 420,
     jabActive: 160,
     jabRecovery: 200,
-    jabReach: 240
+    jabReach: 230
   },
 
   stamina: {
@@ -65,7 +65,7 @@ export const CONFIG = {
       startup: 100,
       active: 140,
       recovery: 150,
-      reach: 250,
+      reach: 245, minReach: 175, // end of the arm
       damage: 3,
       staminaCost: 5,
       hitstop: 60,
@@ -76,7 +76,7 @@ export const CONFIG = {
       startup: 200,
       active: 180,
       recovery: 300,
-      reach: 230,
+      reach: 205, minReach: 140, // have to step in
       damage: 8,
       staminaCost: 15,
       hitstop: 110,
@@ -87,7 +87,7 @@ export const CONFIG = {
       startup: 180,
       active: 160,
       recovery: 280,
-      reach: 200,
+      reach: 165, minReach: 100, // inside only
       damage: 5,
       staminaCost: 12,
       staminaDrain: 12,
@@ -105,9 +105,16 @@ export const CONFIG = {
     counterDamageMul: 1.5
   },
 
+  styles: [
+    { id: 'jabber', name: 'JABBER', weight: { jab: 0.7, cross: 0.2, body: 0.1 }, step: 80 },
+    { id: 'pressure', name: 'PRESSURE', weight: { jab: 0.25, cross: 0.35, body: 0.4 }, step: 140 },
+    { id: 'counter', name: 'COUNTER', weight: { jab: 0.2, cross: 0.6, body: 0.2 }, step: 50 }
+  ],
+
   feel: {
     counterPopupMs: 700,
     dummyResetHold: 600,
-    playerHitFlash: 80
+    playerHitFlash: 80,
+    hitPoseMs: 340
   }
 };

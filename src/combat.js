@@ -74,7 +74,8 @@ export class Combat {
     if (dead) {
       this.stats.dummyKnockdowns += 1;
       this.audio.knockdown();
-      this.dummy.resetRing();
+      const next = CONFIG.styles[(this.dummy.styleIndex + 1) % CONFIG.styles.length].name;
+      this.ui.showGrade(this.stats, this.dummy.style.name, next, () => this.dummy.nextStyle());
     }
   }
 
