@@ -62,12 +62,15 @@ class ArenaScene extends Phaser.Scene {
   puff(x, y, power) {
     const g = this.dust;
     g.clear();
-    g.fillStyle(0xf7fafc, 0.85);
-    const n = power > 0.01 ? 10 : 6;
+    g.fillStyle(0xfff7e6, 0.95);
+    g.fillCircle(x, y, power > 0.008 ? 16 : 9);
+    g.fillStyle(0xf6ad55, 0.9);
+    const n = power > 0.008 ? 12 : 7;
     for (let i = 0; i < n; i++) {
-      g.fillCircle(x - 20 + i * 5, y + 18 - (i % 3) * 6, 2 + (i % 3));
+      const a = (Math.PI * 2 * i) / n;
+      g.fillCircle(x + Math.cos(a) * (10 + i), y + Math.sin(a) * 8, 2 + (i % 3));
     }
-    this.time.delayedCall(140, () => g.clear());
+    this.time.delayedCall(120, () => g.clear());
   }
   update(_time, delta) {
     const dt = Math.min(delta, 32);
