@@ -64,7 +64,8 @@ export class Combat {
     this.dummy.flinch(type, spec.knockback);
     this.hitstop(spec.hitstop);
     this.shake(spec.shake);
-    this.scene.puff((this.player.x + this.dummy.x) / 2, this.dummy.homeY - 70, spec.shake);
+    this.scene.puff((this.player.x + this.dummy.x) / 2, this.dummy.homeY - (type === 'body' ? 110 : 150), spec.shake);
+    this.impact(type, damage, counter);
     this.audio.punch(type);
 
     if (counter) {
@@ -102,6 +103,28 @@ export class Combat {
       this.shake(0.003);
       this.audio.dummyHit();
     }
+  }
+
+  impact(type, damage, counter) {
+    const cam = this.scene.cameras.main;
+    const zoom = type === 'cross' || type === 'upper' ? 1.06 : 1.03;
+    cam.zoomTo(zoom, 40, 'Linear', true);
+    this.scene.time.delayedCall(90, () => cam.zoomTo(1, 80));
+    const y = this.dummy.homeY - (type === 'body' ? 120 : 170);
+    const label = this.scene.add.text(this.dummy.x - 10, y, (counter ? 'COUNTER ' : '') + damage, {
+      fontFamily: 'Impact, system-ui, sans-serif',
+      fontSize: type === 'jab' ? '28px' : '40px',
+      color: counter ? '#f6e05e' : '#fff5f5',
+      stroke: '#1a202c',
+      strokeThickness: 5
+    }).setDepth(12);
+    this.scene.tweens.add({
+      targets: label,
+      y: y - 36,
+      alpha: 0,
+      duration: 420,
+      onComplete: () => label.destroy()
+    });
   }
 
   tickRound(delta) {
