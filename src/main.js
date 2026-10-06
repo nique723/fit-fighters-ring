@@ -25,6 +25,8 @@ class ArenaScene extends Phaser.Scene {
     this.load.image('opp-body', '/sprites/opp-body.png');
     this.load.image('opp-slip', '/sprites/opp-slip.png');
     this.load.image('opp-hit', '/sprites/opp-hit.png');
+    this.load.image('opp-body-hit', '/sprites/opp-body-hit.png');
+    this.load.image('opp-head-hit', '/sprites/opp-head-hit.png');
     this.load.image('alley', '/sprites/alley.jpg');
   }
   create() {

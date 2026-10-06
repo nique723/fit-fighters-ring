@@ -41,6 +41,7 @@ export class Dummy {
     this.knockbackVel = knockback;
     this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' ? 0.12 : 0.05;
     this.flashMs = CONFIG.feel.hitPoseMs;
+    this.hitKind = kind;
     this.burst(kind);
     if (this.state !== 'idle') { this.state = 'idle'; this.phaseMs = 0; }
   }
@@ -96,9 +97,12 @@ export class Dummy {
   paint() {
     const punching = this.state === 'active' || this.state === 'startup';
     const shot = this.punchType || 'jab';
-    const key = this.flashMs > 0 ? 'opp-hit' : punching ? ('opp-' + shot) : 'opp-idle';
+    const reacting = this.flashMs > 0;
+    const key = reacting
+      ? (this.hitKind === 'body' ? 'opp-body-hit' : 'opp-head-hit')
+      : punching ? ('opp-' + shot) : 'opp-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(punching ? 230 : 170, 296);
+    this.sprite.setDisplaySize(punching || reacting ? 210 : 170, 296);
     this.sprite.setTint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
   }
   update(delta) {
@@ -109,7 +113,7 @@ export class Dummy {
     this.knockbackVel *= 0.82;
     if (Math.abs(this.knockbackVel) < 0.2) this.knockbackVel = 0;
     this.bend *= 0.86;
-    this.root.rotation = this.bend;
+    this.root.rotation = this.flashMs > 0 ? this.bend * 0.25 : this.bend;
     this.root.x = Phaser.Math.Clamp(this.root.x, CONFIG.arena.leftBound + 80, CONFIG.arena.rightBound);
     this.root.y = this.homeY;
     this.paint();
