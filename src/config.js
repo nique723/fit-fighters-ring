@@ -42,7 +42,6 @@ export const CONFIG = {
     color: 0x4a5568,
     telegraphColor: 0xed8936,
     jabColor: 0xe53e3e,
-    // Dummy jab is a timing tool, not a full fighter.
     jabInterval: 1600,
     jabStartup: 420,
     jabActive: 160,
@@ -55,18 +54,16 @@ export const CONFIG = {
     regenPerSec: 12,
     regenDelay: 600,
     tiredThreshold: 20,
-    tiredSlowdown: 0.4, // 40% slower startups + recoveries
-    comboLink: 0.4 // next punch can start this far into recovery
+    tiredSlowdown: 0.4,
+    comboLink: 0.4
   },
 
-  // Active windows were missing from the original spec.
-  // Instant hits feel thin. These are the frames the glove can connect.
   punches: {
     jab: {
       startup: 100,
       active: 140,
       recovery: 150,
-      reach: 245, minReach: 175, // end of the arm
+      reach: 245, minReach: 175,
       damage: 3,
       staminaCost: 5,
       hitstop: 60,
@@ -77,7 +74,7 @@ export const CONFIG = {
       startup: 200,
       active: 180,
       recovery: 300,
-      reach: 205, minReach: 140, // have to step in
+      reach: 205, minReach: 140,
       damage: 8,
       staminaCost: 15,
       hitstop: 110,
@@ -88,7 +85,7 @@ export const CONFIG = {
       startup: 180,
       active: 160,
       recovery: 280,
-      reach: 165, minReach: 100, // inside only
+      reach: 165, minReach: 100,
       damage: 5,
       staminaCost: 12,
       staminaDrain: 12,
@@ -101,13 +98,13 @@ export const CONFIG = {
       startup: 170,
       active: 150,
       recovery: 260,
-      reach: 150, minReach: 90, // inside, under the chin
+      reach: 205, minReach: 110,
       damage: 7,
       staminaCost: 14,
       hitstop: 100,
-      knockback: 6,
-      bend: -0.16,
-      shake: 0.01
+      knockback: 14,
+      bend: -0.2,
+      shake: 0.012
     }
   },
 
@@ -134,6 +131,5 @@ export const CONFIG = {
   score: {
     roundMs: 30000,
     points: { jab: 10, cross: 20, body: 15, upper: 25, counter: 15, knockdown: 50, hit: -5 }
-  
   }
 };
