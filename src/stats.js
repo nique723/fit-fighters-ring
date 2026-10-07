@@ -15,7 +15,10 @@ export function createStats() {
     dummyKnockdowns: 0,
     points: 0,
     level: 1,
+    round: 1,
     roundMs: 30000,
+    running: false,
+    finished: false,
     camera: {
       confidence: 0,
       missedFrames: 0,

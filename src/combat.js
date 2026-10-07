@@ -132,15 +132,56 @@ export class Combat {
     });
   }
 
+  shots() {
+    const s = this.stats;
+    return {
+      you: s.landed.jab + s.landed.cross + s.landed.body + s.landed.upper,
+      him: s.dummyJabsLanded
+    };
+  }
+
+  start() {
+    this.stats.running = true;
+    this.stats.finished = false;
+    this.stats.round = 1;
+    this.stats.roundMs = CONFIG.score.roundMs;
+    this.stats.landed = { jab: 0, cross: 0, body: 0, upper: 0 };
+    this.stats.dummyJabsLanded = 0;
+    this.dummy.level = 2;
+    this.dummy.resetRing();
+    this.ui.grade.setAlpha(0);
+  }
+
+  stop() {
+    this.stats.running = false;
+    this.stats.finished = true;
+    const n = this.shots();
+    this.ui.showResult('STOPPED', n.you, n.him);
+  }
+
   tickRound(delta) {
+    if (!this.stats.running) return;
     this.stats.roundMs -= delta;
     if (this.stats.roundMs > 0) return;
-    this.stats.level += 1;
+    if (this.stats.round >= CONFIG.score.rounds) {
+      this.stats.running = false;
+      this.stats.finished = true;
+      const n = this.shots();
+      this.ui.showResult('3 ROUNDS', n.you, n.him);
+      return;
+    }
+    this.stats.round += 1;
     this.stats.roundMs = CONFIG.score.roundMs;
-    this.dummy.level = this.stats.level;
+    this.dummy.level = this.stats.round + 1;
+    this.audio.telegraph();
   }
 
   update(delta, input) {
+    if (!this.stats.running) {
+      this.player.paint();
+      this.dummy.paint();
+      return;
+    }
     if (this.frozenMs > 0) {
       this.frozenMs -= delta;
       this.player.paint();

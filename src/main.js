@@ -52,6 +52,16 @@ class ArenaScene extends Phaser.Scene {
       const btn = document.getElementById('sound-test');
       if (btn) { btn.textContent = state === 'running' ? 'Sound on' : 'Tap sound'; btn.classList.toggle('on', state === 'running'); }
     };
+    const fight = document.getElementById('fight-toggle');
+    fight.addEventListener('click', () => {
+      if (this.stats.running) {
+        this.combat.stop();
+        fight.textContent = 'Start';
+      } else {
+        this.combat.start();
+        fight.textContent = 'Stop';
+      }
+    });
     document.getElementById('sound-test').addEventListener('pointerdown', (e) => { e.preventDefault(); unlock(); });
     document.addEventListener('pointerdown', unlock, { once: true });
     window.addEventListener('keydown', unlock, { once: true });

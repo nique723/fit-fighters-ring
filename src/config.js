@@ -135,6 +135,7 @@ export const CONFIG = {
 
   score: {
     roundMs: 30000,
+    rounds: 3,
     points: { jab: 10, cross: 20, body: 15, upper: 25, counter: 15, knockdown: 50, hit: -5 }
   }
 };

@@ -78,6 +78,11 @@ export class UI {
     }).setOrigin(0.5).setAlpha(0).setDepth(20);
   }
 
+  showResult(title, you, him) {
+    const winner = you === him ? 'DRAW' : you > him ? 'YOU WIN' : 'HE WINS';
+    this.grade.setText([winner, title, 'You ' + you + '    Him ' + him].join('\n')).setAlpha(1);
+  }
+
   showGrade(stats, beaten, next, done) {
     const pct = (l, t) => t ? Math.round((l / t) * 100) + '%' : '—';
     const thrown = stats.thrown.jab + stats.thrown.cross + stats.thrown.body + stats.thrown.upper;
@@ -131,8 +136,10 @@ export class UI {
     this.drawBar(this.dSt, this.dStBg, dummy.stamina / CONFIG.stamina.max);
     if (dummy.style) this.dLabel.setText(dummy.style.name);
     const left = Math.ceil((stats.roundMs || 0) / 1000);
-    this.sub.setText('LV ' + (stats.level || 1) + '  ·  0:' + String(left).padStart(2, '0'));
-    this.scoreText.setText((stats.points || 0) + ' PTS');
+    const you = (stats.landed.jab + stats.landed.cross + stats.landed.body + stats.landed.upper) || 0;
+    const him = stats.dummyJabsLanded || 0;
+    this.sub.setText('ROUND ' + (stats.round || 1) + ' / 3  ·  0:' + String(left).padStart(2, '0'));
+    this.scoreText.setText(you + '  –  ' + him);
 
     if (this.debugOn) {
       this.overlay.textContent = formatStats(stats, {
