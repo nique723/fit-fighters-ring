@@ -5,7 +5,7 @@
 export class InputBus {
   constructor() {
     this.held = { left: false, right: false };
-    this.queued = { jab: false, cross: false, body: false, upper: false, slip: false };
+    this.queued = { jab: false, cross: false, body: false, upper: false, slip: false, duck: false };
     this.debugPressed = false;
     this.instant = false;
     this.isTouch = false;
@@ -74,7 +74,7 @@ export class InputBus {
   onKeyDown(e) {
     if (e.repeat) return;
     const k = e.key.toLowerCase();
-    if (['arrowleft', 'arrowright', ' ', 'a', 'd', 'j', 'k', 'l', 'u'].includes(k) || e.code === 'Space') {
+    if (['arrowleft', 'arrowright', ' ', 'a', 'd', 's', 'j', 'k', 'l', 'u'].includes(k) || e.code === 'Space') {
       e.preventDefault();
     }
     if (k === 'a' || e.code === 'ArrowLeft') this.held.left = true;
@@ -84,6 +84,7 @@ export class InputBus {
     if (k === 'l') this.queued.body = true;
     if (k === 'u') this.queued.upper = true;
     if (k === ' ' || e.code === 'Space') this.queued.slip = true;
+    if (k === 's') this.queued.duck = true;
     if (e.key === '`' || e.code === 'Backquote') this.debugPressed = true;
   }
 
@@ -130,6 +131,12 @@ export class InputBus {
   consumeSlip() {
     if (!this.queued.slip) return false;
     this.queued.slip = false;
+    return true;
+  }
+
+  consumeDuck() {
+    if (!this.queued.duck) return false;
+    this.queued.duck = false;
     return true;
   }
 

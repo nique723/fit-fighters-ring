@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 
-const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping']);
+const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
 
 export class Player {
   constructor(scene, x, y) {
@@ -57,6 +57,16 @@ export class Player {
     this.root.body.setVelocityX(0);
     return true;
   }
+  tryDuck() {
+    if (!this.canAct() || this.stamina < CONFIG.duck.staminaCost) return false;
+    this.spendStamina(CONFIG.duck.staminaCost);
+    this.state = 'ducking';
+    this.phaseMs = 0;
+    this.phaseDuration = CONFIG.duck.duration;
+    this.root.body.setVelocityX(0);
+    return true;
+  }
+  isDucking() { return this.state === 'ducking'; }
   trySlip() {
     if (!this.canAct() || this.stamina < CONFIG.slip.staminaCost) return false;
     this.spendStamina(CONFIG.slip.staminaCost);
@@ -119,7 +129,7 @@ export class Player {
       this.phaseDuration = this.scaled(spec.recovery);
       return this.connectedThisPunch ? 'recovered-hit' : 'recovered-whiff';
     }
-    if (this.state === 'recovery' || this.state === 'slipping') {
+    if (this.state === 'recovery' || this.state === 'slipping' || this.state === 'ducking') {
       this.state = this.tired ? 'tired' : 'idle';
       this.punchType = null;
       this.root.y = this.homeY;
@@ -130,6 +140,7 @@ export class Player {
   }
   pose() {
     if (this.state === 'slipping') return 'slip';
+    if (this.state === 'ducking') return 'duck';
     if (this.state === 'startup') return 'startup';
     if (this.state === 'recovery') return 'recovery';
     if (this.state === 'active') return this.punchType || 'jab';
@@ -140,13 +151,14 @@ export class Player {
     const pose = this.pose();
     const throwing = pose === 'jab' || pose === 'cross' || pose === 'body' || pose === 'upper' || pose === 'startup';
     const shot = this.punchType || 'jab';
-    const key = pose === 'slip' ? 'player-slip'
+    const key = pose === 'duck' ? 'player-duck'
+      : pose === 'slip' ? 'player-slip'
       : pose === 'hit' ? 'player-hit'
       : throwing ? ('player-' + shot)
       : 'player-idle';
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
     const wide = throwing && shot !== 'body';
-    this.sprite.setDisplaySize(wide ? 230 : 176, 300);
+    this.sprite.setDisplaySize(pose === 'duck' ? 210 : shot === 'upper' ? 220 : wide ? 230 : 176, pose === 'duck' ? 250 : 300);
     this.sprite.setTint(0xffffff);
     this.root.setAlpha(1);
   }

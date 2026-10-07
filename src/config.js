@@ -115,6 +115,11 @@ export const CONFIG = {
     counterDamageMul: 1.5
   },
 
+  duck: {
+    duration: 280,
+    staminaCost: 6
+  },
+
   styles: [
     { id: 'jabber', name: 'JABBER', weight: { jab: 0.7, cross: 0.2, body: 0.1 }, step: 80 },
     { id: 'pressure', name: 'PRESSURE', weight: { jab: 0.25, cross: 0.35, body: 0.4 }, step: 140 },

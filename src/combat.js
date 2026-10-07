@@ -93,6 +93,11 @@ export class Combat {
       this.dummy.hitThisJab = false;
       return;
     }
+    if (this.player.isDucking() && this.dummy.punchType !== 'body') {
+      this.dummy.hitThisJab = false;
+      this.audio.slip();
+      return;
+    }
 
     if (this.dummy.inJabRange(this.player)) {
       this.dummy.hitThisJab = true;
@@ -153,6 +158,9 @@ export class Combat {
 
     if (input.consumeSlip() && this.player.trySlip()) {
       this.stats.slipsAttempted += 1;
+      this.audio.slip();
+    }
+    if (input.consumeDuck() && this.player.tryDuck()) {
       this.audio.slip();
     }
 
