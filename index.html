@@ -38,7 +38,8 @@
       #debug-overlay.visible { display: block; }
       #hint { position: absolute; top: 8px; right: 12px; z-index: 25; color: rgba(237,242,247,.65); font: 600 11px/1.3 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
       @media (pointer: coarse) { #hint { display: none; } }
-      #fight-toggle { position: absolute; top: 46px; left: 10px; z-index: 40; height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid #f6e05e; background: #d69e2e; color: #1a202c; font: 800 12px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+      #fight-toggle { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 50; min-width: 180px; height: 64px; padding: 0 28px; border-radius: 16px; border: 3px solid #fff; background: #f6e05e; color: #1a202c; font: 900 22px/1 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 8px 0 #b7791f; }
+      #fight-toggle.stop { background: #e53e3e; color: #fff; box-shadow: 0 8px 0 #9b2c2c; }
       #sound-test { position: absolute; top: 8px; left: 10px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
       #sound-test.on { background: #276749; border-color: #68d391; }
       #full-toggle { position: absolute; top: 8px; right: 96px; z-index: 40; width: 32px; height: 32px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 16px/1 system-ui, sans-serif; }

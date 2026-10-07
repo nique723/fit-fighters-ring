@@ -57,9 +57,11 @@ class ArenaScene extends Phaser.Scene {
       if (this.stats.running) {
         this.combat.stop();
         fight.textContent = 'Start';
+        fight.classList.remove('stop');
       } else {
         this.combat.start();
         fight.textContent = 'Stop';
+        fight.classList.add('stop');
       }
     });
     document.getElementById('sound-test').addEventListener('pointerdown', (e) => { e.preventDefault(); unlock(); });
