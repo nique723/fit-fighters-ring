@@ -1,40 +1,37 @@
 import { CONFIG } from './config.js';
+import { FighterView, idleFrame, walkFrame } from './fighter-view.js';
 
 export class Dummy {
-  constructor(scene, x, y) {
+  constructor(scene, x, z) {
     this.scene = scene;
     this.homeX = x;
-    this.homeY = y;
+    this.homeZ = z;
+    this.x = x;
+    this.z = z;
+    this.facing = -1;
     this.health = CONFIG.dummy.maxHealth;
     this.stamina = CONFIG.stamina.max;
     this.state = 'idle';
     this.phaseMs = 0;
     this.phaseDuration = 0;
+    this.level = 1;
     this.cooldown = Math.max(420, 900 - this.level * 140);
     this.knockbackVel = 0;
     this.bend = 0;
     this.hitThisJab = false;
     this.resetMs = 0;
+    this.downMs = 0;
     this.flashMs = 0;
     this.styleIndex = 0;
     this.punchType = 'jab';
-    this.level = 1;
-    this.root = scene.add.container(x, y);
-    this.sprite = scene.add.image(-4, 0, 'opp-idle').setOrigin(0.55, 1);
-    this.sprite.setDisplaySize(156, 286);
-    this.sparks = scene.add.graphics();
-    this.root.add([this.sprite, this.sparks]);
-    scene.physics.add.existing(this.root);
-    const body = this.root.body;
-    body.setSize(CONFIG.dummy.width, CONFIG.dummy.height + 30);
-    body.setOffset(-CONFIG.dummy.width / 2, -60);
-    body.setAllowGravity(false);
-    body.setImmovable(false);
-    body.setCollideWorldBounds(true);
+    this.moveMs = 0;
+    this.moving = false;
+    this.circleDir = 1;
+    this.circleMs = 0;
+    this.view = new FighterView(scene, 'o-');
+    this.sparks = scene.add.graphics().setDepth(9);
     this.paint();
   }
-  get x() { return this.root.x; }
-  get frontX() { return this.root.x - CONFIG.dummy.width / 2; }
   get telegraphing() { return this.state === 'startup'; }
   get punching() { return this.state === 'active'; }
   flinch(kind, knockback) {
@@ -47,14 +44,19 @@ export class Dummy {
   }
   burst(kind) {
     const g = this.sparks;
+    const head = this.view.sprite;
     g.clear();
-    const n = kind === 'cross' ? 8 : 5;
-    g.fillStyle(kind === 'body' ? 0xf6ad55 : 0xf7fafc, 0.9);
+    const n = kind === 'cross' || kind === 'upper' ? 9 : 6;
+    const s = head.scaleX / 0.6;
+    const cx = head.x - this.facing * 30 * s;
+    const cy = head.y - (kind === 'body' ? 150 : 225) * s;
+    g.fillStyle(kind === 'body' ? 0xf6ad55 : 0xf7fafc, 0.95);
     for (let i = 0; i < n; i++) {
-      const a = -0.4 - i * 0.2;
-      g.fillCircle(Math.cos(a) * (12 + i * 4), Math.sin(a) * 8 - 10, 2 + (i % 2));
+      const a = (Math.PI * 2 * i) / n;
+      g.fillCircle(cx + Math.cos(a) * (14 + i * 2) * s, cy + Math.sin(a) * 10 * s, (2 + (i % 2)) * s);
     }
   }
+  knockDown() { this.downMs = 2200; this.state = 'idle'; this.knockbackVel = 0; }
   nextStyle() {
     this.styleIndex = (this.styleIndex + 1) % CONFIG.styles.length;
     this.resetRing();
@@ -67,8 +69,15 @@ export class Dummy {
     this.cooldown = Math.max(420, 900 - this.level * 140);
     this.knockbackVel = 0;
     this.bend = 0;
-    this.root.x = this.homeX;
-    this.root.rotation = 0;
+    this.downMs = 0;
+    const p = this.scene.player;
+    // re-enter on the far side of the player, same lane
+    if (p) {
+      this.z = p.z;
+      this.x = p.x < 480 ? Math.min(CONFIG.arena.rightBound, p.x + 340) : Math.max(CONFIG.arena.leftBound, p.x - 340);
+    } else {
+      this.x = this.homeX; this.z = this.homeZ;
+    }
     this.resetMs = CONFIG.feel.dummyResetHold;
     this.sparks.clear();
   }
@@ -77,66 +86,83 @@ export class Dummy {
     this.stamina = Math.max(0, this.stamina - staminaDrain);
     return this.health <= 0;
   }
-  pose() {
-    if (this.flashMs > 0) return 'hit';
-    if (this.state === 'startup') return 'telegraph';
-    if (this.state === 'active') return 'jab';
-    if (this.state === 'recovery') return 'recovery';
-    return 'idle';
-  }
   get style() { return CONFIG.styles[this.styleIndex % CONFIG.styles.length]; }
   pickPunch(gap) {
     const w = this.style.weight;
     const roll = Math.random();
     let type = roll < w.jab ? 'jab' : roll < w.jab + w.cross ? 'cross' : 'body';
-    if (type === 'body' && gap > 190) type = 'jab';
-    if (type === 'cross' && gap > 230) type = 'jab';
+    if (type === 'body' && gap > CONFIG.punches.body.reach) type = 'jab';
+    if (type === 'cross' && gap > CONFIG.punches.cross.reach) type = 'jab';
     this.punchType = type;
     return type;
   }
-  paint() {
-    const punching = this.state === 'active' || this.state === 'startup';
+  frameName() {
+    if (this.downMs > 0) return 'kneel';
+    if (this.flashMs > 0) return this.hitKind === 'body' ? 'hitbody' : 'hithead';
     const shot = this.punchType || 'jab';
-    const reacting = this.flashMs > 0;
-    const key = reacting
-      ? (this.hitKind === 'body' ? 'opp-body-hit' : 'opp-head-hit')
-      : punching ? ('opp-' + shot) : 'opp-idle';
-    if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
-    this.sprite.setDisplaySize(punching || reacting ? 210 : 170, 296);
-    this.sprite.setTint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
+    if (this.state === 'startup') return shot + '0';
+    if (this.state === 'active') return shot + '1';
+    if (this.state === 'recovery') return shot + '0';
+    if (this.moving) return walkFrame(this.moveMs);
+    return idleFrame(this.scene.nowMs + 300);
+  }
+  paint() {
+    this.view.setFrame(this.frameName());
+    this.view.tint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
+    this.view.lean = this.flashMs > 0 ? this.bend * 0.25 : this.bend * 0.5;
+    this.view.place(this.x, this.z, this.facing);
   }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;
+    if (this.downMs > 0) this.downMs -= delta;
     if (this.flashMs > 0) this.flashMs -= delta;
     else this.sparks.clear();
-    this.root.x += this.knockbackVel;
+    // knockback pushes away from the player
+    this.x += -this.facing * this.knockbackVel;
     this.knockbackVel *= 0.82;
     if (Math.abs(this.knockbackVel) < 0.2) this.knockbackVel = 0;
     this.bend *= 0.86;
-    this.root.rotation = this.flashMs > 0 ? this.bend * 0.25 : this.bend;
-    this.root.x = Phaser.Math.Clamp(this.root.x, CONFIG.arena.leftBound + 80, CONFIG.arena.rightBound);
-    this.root.y = this.homeY;
+    this.x = Phaser.Math.Clamp(this.x, CONFIG.arena.leftBound, CONFIG.arena.rightBound);
+    this.z = Phaser.Math.Clamp(this.z, CONFIG.arena.depthMin, CONFIG.arena.depthMax);
     this.paint();
   }
+  /** Move toward a spot; returns true if it moved. */
+  stepToward(tx, tz, speedX, delta) {
+    const dt = delta / 1000;
+    let moved = false;
+    const dx = tx - this.x;
+    if (Math.abs(dx) > 10) { this.x += Math.sign(dx) * Math.min(Math.abs(dx), speedX * dt); moved = true; }
+    const dz = tz - this.z;
+    const zs = CONFIG.dummy.depthSpeed * (0.8 + this.level * 0.15);
+    if (Math.abs(dz) > 0.02) { this.z += Math.sign(dz) * Math.min(Math.abs(dz), zs * dt); moved = true; }
+    if (moved) this.moveMs += delta * (Math.sign(dx) === this.facing ? 1 : -1);
+    return moved;
+  }
   tickAI(delta) {
-    if (this.resetMs > 0) return 'none';
+    this.moving = false;
+    if (this.resetMs > 0 || this.downMs > 0) return 'none';
     if (this.state === 'idle') {
       const player = this.scene.player;
       if (player) {
-        const gap = this.root.x - player.root.x;
-        const want = 230 - this.style.step * 0.4;
-        if (gap > want + 12) {
-          this.root.x -= (120 + this.level * 20) * (delta / 1000);
-          return 'none';
+        const side = this.x >= player.x ? 1 : -1;
+        const gap = Math.abs(this.x - player.x);
+        const want = 200 - this.style.step * 0.3;
+        // counter style likes to circle; everyone drifts a little so the lane is never static
+        this.circleMs -= delta;
+        if (this.circleMs <= 0) { this.circleDir = Math.random() < 0.5 ? -1 : 1; this.circleMs = 900 + Math.random() * 1400; }
+        const drift = this.style.id === 'counter' ? 0.10 : 0.04;
+        const tz = Phaser.Math.Clamp(player.z + this.circleDir * drift, 0, 1);
+        const aligned = Math.abs(this.z - player.z) <= CONFIG.arena.laneTolerance * 0.8;
+        const tx = player.x + side * want;
+        const speed = gap > want ? 120 + this.level * 25 : 75;
+        if (Math.abs(gap - want) > 18 || Math.abs(tz - this.z) > 0.05) {
+          this.moving = this.stepToward(tx, tz, speed, delta);
         }
-        if (gap < want - 20) {
-          this.root.x += 70 * (delta / 1000);
-          return 'none';
-        }
+        if (!aligned || gap > want + 40) return 'none';
       }
       this.cooldown -= delta;
       if (this.cooldown <= 0) {
-        this.pickPunch(player ? this.root.x - player.root.x : 200);
+        this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
         this.state = 'startup';
         this.phaseMs = 0;
         this.phaseDuration = Math.max(140, 320 - this.level * 30);
@@ -164,8 +190,9 @@ export class Dummy {
     return 'idle';
   }
   inJabRange(player) {
-    const gap = this.root.x - player.root.x;
-    const reach = CONFIG.punches[this.punchType || "jab"].reach;
-    return gap <= reach && gap >= 100;
+    if (Math.abs(this.z - player.z) > CONFIG.arena.laneTolerance) return false;
+    const gap = Math.abs(this.x - player.x);
+    const spec = CONFIG.punches[this.punchType || 'jab'];
+    return gap <= spec.reach + 10 && gap >= 80;
   }
 }

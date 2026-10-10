@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { project } from './stage.js';
 
 /**
  * Resolves punches, slips, hitstop, shake, counters.
@@ -27,14 +28,27 @@ export class Combat {
     this.scene.cameras.main.shake(intensity > 0.01 ? 220 : 150, intensity * 1.6);
   }
 
+  /** Fighters can't walk through each other in the same lane; off-lane they can pass. */
   keepSeparation() {
+    const p = this.player, d = this.dummy;
+    if (Math.abs(d.z - p.z) >= CONFIG.arena.blockDepth) return;
     const min = CONFIG.arena.minGap;
-    const gap = this.dummy.x - this.player.x;
-    if (gap < min) {
-      const mid = (this.dummy.x + this.player.x) / 2;
-      this.player.x = mid - min / 2;
-      this.dummy.root.x = mid + min / 2;
-    }
+    const dx = d.x - p.x;
+    if (Math.abs(dx) >= min) return;
+    const side = Math.sign(dx) || p.facing;
+    const lo = CONFIG.arena.leftBound, hi = CONFIG.arena.rightBound;
+    const mid = Phaser.Math.Clamp((d.x + p.x) / 2, lo + min / 2, hi - min / 2);
+    p.x = mid - side * min / 2;
+    d.x = mid + side * min / 2;
+  }
+
+  /** Always square up to each other — lets the player circle and switch sides. */
+  updateFacing() {
+    const dx = this.dummy.x - this.player.x;
+    if (Math.abs(dx) < 4) return;
+    const side = Math.sign(dx);
+    this.player.facing = side;
+    this.dummy.facing = -side;
   }
 
   onPlayerActive() {
@@ -45,7 +59,7 @@ export class Combat {
 
     this.player.hitThisPunch = true;
 
-    if (!connected) {
+    if (!connected || this.dummy.downMs > 0) {
       this.stats.whiffs[type] += 1;
       this.audio.whiff();
       return;
@@ -64,7 +78,8 @@ export class Combat {
     this.dummy.flinch(type, spec.knockback);
     this.hitstop(spec.hitstop);
     this.shake(spec.shake);
-    this.scene.puff((this.player.x + this.dummy.x) / 2, this.dummy.homeY - (type === 'body' ? 110 : 150), spec.shake);
+    const hp = project((this.player.x + this.dummy.x) / 2, this.dummy.z, type === 'body' ? 1.05 : 1.5);
+    this.scene.puff(hp.x, hp.y, spec.shake, hp.k);
     this.impact(type, damage, counter);
     this.audio.punch(type);
 
@@ -78,6 +93,7 @@ export class Combat {
       this.stats.dummyKnockdowns += 1;
       this.stats.points += CONFIG.score.points.knockdown;
       this.audio.knockdown();
+      this.dummy.knockDown();
       const next = CONFIG.styles[(this.dummy.styleIndex + 1) % CONFIG.styles.length].name;
       this.ui.showGrade(this.stats, this.dummy.style.name, next, () => this.dummy.nextStyle());
     }
@@ -103,7 +119,7 @@ export class Combat {
       this.dummy.hitThisJab = true;
       this.stats.dummyJabsLanded += 1;
       this.stats.points = Math.max(0, this.stats.points + CONFIG.score.points.hit);
-      this.player.takeDummyHit();
+      this.player.takeDummyHit(this.dummy.punchType);
       this.hitstop(50);
       this.shake(0.003);
       this.audio.dummyHit();
@@ -111,18 +127,17 @@ export class Combat {
   }
 
   impact(type, damage, counter) {
-    const cam = this.scene.cameras.main;
-    const zoom = type === 'cross' || type === 'upper' ? 1.06 : 1.03;
-    cam.zoomTo(zoom, 40, 'Linear', true);
-    this.scene.time.delayedCall(90, () => cam.zoomTo(1, 80));
-    const y = this.dummy.homeY - (type === 'body' ? 120 : 170);
-    const label = this.scene.add.text(this.dummy.x - 10, y, (counter ? 'COUNTER ' : '') + damage, {
+    this.scene.zoomKick = type === 'cross' || type === 'upper' ? 0.07 : 0.035;
+    const lp = project(this.dummy.x, this.dummy.z, type === 'body' ? 1.2 : 1.85);
+    const y = lp.y;
+    const label = this.scene.add.text(lp.x, y, (counter ? 'COUNTER ' : '') + damage, {
       fontFamily: 'Impact, system-ui, sans-serif',
       fontSize: type === 'jab' ? '28px' : '40px',
       color: counter ? '#f6e05e' : '#fff5f5',
       stroke: '#1a202c',
       strokeThickness: 5
-    }).setDepth(12);
+    }).setOrigin(0.5, 1).setDepth(12);
+    if (this.scene.uiCam) this.scene.uiCam.ignore(label);
     this.scene.tweens.add({
       targets: label,
       y: y - 36,
@@ -178,7 +193,10 @@ export class Combat {
 
   update(delta, input) {
     if (!this.stats.running) {
-      this.player.paint();
+      // free roam before the bell: warm up, learn the ring
+      this.updateFacing();
+      this.player.update(delta, input.axis(), input.depthAxis());
+      this.keepSeparation();
       this.dummy.paint();
       return;
     }
@@ -212,7 +230,8 @@ export class Combat {
     if (dummyEvent === 'telegraph') this.audio.telegraph();
     if (dummyEvent === 'became-active') this.onDummyActive();
 
-    this.player.update(delta, input.axis());
+    this.updateFacing();
+    this.player.update(delta, input.axis(), input.depthAxis());
     this.player.regen(delta, this.scene.nowMs);
     this.tickRound(delta);
     this.dummy.update(delta);

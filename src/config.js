@@ -9,18 +9,43 @@ export const CONFIG = {
     background: 0x12161c
   },
 
+  // Pre-rendered sprite frames (Blender, 480x504, feet anchor). See tools/sprites.
+  sprite: {
+    pxPerM: 240,
+    anchorX: 0.4,
+    anchorY: 0.9716,
+    frames: ['idle0', 'idle1', 'idle2', 'idle3', 'walk0', 'walk1', 'walk2', 'walk3',
+      'jab0', 'jab1', 'cross0', 'cross1', 'body0', 'body1', 'upper0', 'upper1',
+      'slip', 'duck', 'hithead', 'hitbody', 'kneel']
+  },
+
+  // Broadcast camera (zoom 1 = whole arena visible).
+  camera: {
+    maxZoom: 1.45,
+    minZoom: 1.08,
+    closeDist: 230,   // screen px between fighters before the camera starts pulling out
+    zoomOutPer: 650,
+    lookAbove: 120,   // frame centre sits this far above the fighters' feet
+    follow: 0.08
+  },
+
   arena: {
-    floorY: 468,
     leftBound: 70,
     rightBound: 890,
-    minGap: 150
+    minGap: 125,          // x gap kept when fighters share a lane
+    laneTolerance: 0.14,  // |dz| a punch can still land across (0..1 depth, ~0.5 m)
+    blockDepth: 0.22,     // |dz| under which fighters can't pass through each other
+    depthMin: 0,
+    depthMax: 1
   },
 
   player: {
-    startX: 280,
+    startX: 300,
+    startZ: 0.4,
+    depthSpeed: 0.65,
     width: 46,
     height: 92,
-    moveSpeed: 210,
+    moveSpeed: 260,
     slipX: -22,
     slipY: 16,
     colors: {
@@ -35,7 +60,9 @@ export const CONFIG = {
   },
 
   dummy: {
-    startX: 620,
+    startX: 640,
+    startZ: 0.4,
+    depthSpeed: 0.32,
     width: 50,
     height: 100,
     maxHealth: 100,
@@ -63,7 +90,7 @@ export const CONFIG = {
       startup: 100,
       active: 140,
       recovery: 150,
-      reach: 245, minReach: 175,
+      reach: 215, minReach: 125,
       damage: 3,
       staminaCost: 5,
       hitstop: 60,
@@ -74,7 +101,7 @@ export const CONFIG = {
       startup: 200,
       active: 180,
       recovery: 300,
-      reach: 205, minReach: 140,
+      reach: 210, minReach: 120,
       damage: 8,
       staminaCost: 15,
       hitstop: 110,
@@ -85,7 +112,7 @@ export const CONFIG = {
       startup: 180,
       active: 160,
       recovery: 280,
-      reach: 165, minReach: 100,
+      reach: 185, minReach: 110,
       damage: 5,
       staminaCost: 12,
       staminaDrain: 12,
@@ -98,7 +125,7 @@ export const CONFIG = {
       startup: 170,
       active: 150,
       recovery: 260,
-      reach: 205, minReach: 110,
+      reach: 165, minReach: 100,
       damage: 7,
       staminaCost: 14,
       hitstop: 100,

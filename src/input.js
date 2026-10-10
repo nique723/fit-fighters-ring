@@ -1,10 +1,10 @@
 /**
  * Desktop keys + mobile thumb buttons.
- * Movement is held. Punches and slip are edge-triggered.
+ * Movement is held (left/right + in/out of the ring). Punches and slip are edge-triggered.
  */
 export class InputBus {
   constructor() {
-    this.held = { left: false, right: false };
+    this.held = { left: false, right: false, up: false, down: false };
     this.queued = { jab: false, cross: false, body: false, upper: false, slip: false, duck: false };
     this.debugPressed = false;
     this.instant = false;
@@ -60,7 +60,7 @@ export class InputBus {
   }
 
   press(action, instant) {
-    if (action === 'left' || action === 'right') this.held[action] = true;
+    if (action in this.held) this.held[action] = true;
     else if (action in this.queued) {
       this.queued[action] = true;
       if (instant) this.instant = true;
@@ -68,23 +68,25 @@ export class InputBus {
   }
 
   release(action) {
-    if (action === 'left' || action === 'right') this.held[action] = false;
+    if (action in this.held) this.held[action] = false;
   }
 
   onKeyDown(e) {
     if (e.repeat) return;
     const k = e.key.toLowerCase();
-    if (['arrowleft', 'arrowright', ' ', 'a', 'd', 's', 'j', 'k', 'l', 'u'].includes(k) || e.code === 'Space') {
+    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's', 'i', 'j', 'k', 'l', 'u'].includes(k) || e.code === 'Space') {
       e.preventDefault();
     }
     if (k === 'a' || e.code === 'ArrowLeft') this.held.left = true;
     if (k === 'd' || e.code === 'ArrowRight') this.held.right = true;
+    if (k === 'w' || e.code === 'ArrowUp') this.held.up = true;
+    if (k === 's' || e.code === 'ArrowDown') this.held.down = true;
     if (k === 'j') this.queued.jab = true;
     if (k === 'k') this.queued.cross = true;
     if (k === 'l') this.queued.body = true;
     if (k === 'u') this.queued.upper = true;
     if (k === ' ' || e.code === 'Space') this.queued.slip = true;
-    if (k === 's') this.queued.duck = true;
+    if (k === 'i' || e.key === 'Shift') this.queued.duck = true;
     if (e.key === '`' || e.code === 'Backquote') this.debugPressed = true;
   }
 
@@ -92,6 +94,8 @@ export class InputBus {
     const k = e.key.toLowerCase();
     if (k === 'a' || e.code === 'ArrowLeft') this.held.left = false;
     if (k === 'd' || e.code === 'ArrowRight') this.held.right = false;
+    if (k === 'w' || e.code === 'ArrowUp') this.held.up = false;
+    if (k === 's' || e.code === 'ArrowDown') this.held.down = false;
   }
 
   takeInstant() {
@@ -145,6 +149,14 @@ export class InputBus {
     this.debugPressed = false;
     this.instant = false;
     return true;
+  }
+
+  /** +1 = into the ring (away from camera), -1 = toward camera. */
+  depthAxis() {
+    let z = 0;
+    if (this.held.up) z += 1;
+    if (this.held.down) z -= 1;
+    return z;
   }
 
   axis() {

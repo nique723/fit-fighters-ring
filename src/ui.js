@@ -8,27 +8,33 @@ export class UI {
     this.overlay = document.getElementById('debug-overlay');
 
     const w = CONFIG.game.width;
+    // dark broadcast strip so the HUD reads over the arena
+    this.panel = scene.add.rectangle(w / 2, 0, w, 220, 0x05060c, 0.6).setOrigin(0.5, 0.5).setDepth(19);
 
-    this.pLabel = scene.add.text(24, 16, 'YOU  STAMINA', {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '12px',
-      color: '#90cdf4',
+    this.pLabel = scene.add.text(24, 58, 'CRIMSON GUARD  ·  STAMINA', {
+      fontFamily: 'Impact, Haettenschweiler, system-ui, sans-serif',
+      fontSize: '14px',
+      color: '#feb2b2',
+      stroke: '#0b0d12',
+      strokeThickness: 3,
       fontStyle: '700'
     });
-    this.dLabel = scene.add.text(w - 24, 16, 'JABBER', {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '12px',
-      color: '#feb2b2',
+    this.dLabel = scene.add.text(w - 24, 58, 'WHITE LIGHTNING', {
+      fontFamily: 'Impact, Haettenschweiler, system-ui, sans-serif',
+      fontSize: '14px',
+      color: '#bee3f8',
+      stroke: '#0b0d12',
+      strokeThickness: 3,
       fontStyle: '700'
     }).setOrigin(1, 0);
 
-    this.pStBg = scene.add.rectangle(24, 42, 220, 14, 0x1a202c).setOrigin(0, 0.5);
-    this.pSt = scene.add.rectangle(24, 42, 220, 14, 0x63b3ed).setOrigin(0, 0.5);
+    this.pStBg = scene.add.rectangle(24, 86, 220, 14, 0x1a202c).setOrigin(0, 0.5);
+    this.pSt = scene.add.rectangle(24, 86, 220, 14, 0xe53e3e).setOrigin(0, 0.5);
 
-    this.dHpBg = scene.add.rectangle(w - 24, 38, 220, 12, 0x1a202c).setOrigin(1, 0.5);
-    this.dHp = scene.add.rectangle(w - 24, 38, 220, 12, 0xe53e3e).setOrigin(1, 0.5);
-    this.dStBg = scene.add.rectangle(w - 24, 54, 220, 8, 0x1a202c).setOrigin(1, 0.5);
-    this.dSt = scene.add.rectangle(w - 24, 54, 220, 8, 0xed8936).setOrigin(1, 0.5);
+    this.dHpBg = scene.add.rectangle(w - 24, 84, 220, 12, 0x1a202c).setOrigin(1, 0.5);
+    this.dHp = scene.add.rectangle(w - 24, 84, 220, 12, 0xe53e3e).setOrigin(1, 0.5);
+    this.dStBg = scene.add.rectangle(w - 24, 98, 220, 8, 0x1a202c).setOrigin(1, 0.5);
+    this.dSt = scene.add.rectangle(w - 24, 98, 220, 8, 0xed8936).setOrigin(1, 0.5);
 
     this.counterText = scene.add
       .text(w / 2, 120, 'COUNTER', {
@@ -39,28 +45,31 @@ export class UI {
         strokeThickness: 6
       })
       .setOrigin(0.5)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(20);
 
     this.brand = scene.add
-      .text(w / 2, 18, 'FIT FIGHTERS', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '14px',
-        color: '#f7fafc',
-        fontStyle: '800',
-        letterSpacing: 4
+      .text(w / 2, 14, 'FIT FIGHTERS', {
+        fontFamily: 'Impact, Haettenschweiler, system-ui, sans-serif',
+        fontSize: '20px',
+        color: '#f6e05e',
+        fontStyle: 'italic',
+        stroke: '#d53f8c',
+        strokeThickness: 4,
+        letterSpacing: 3
       })
       .setOrigin(0.5, 0);
 
     this.sub = scene.add
-      .text(w / 2, 36, 'ALLEY', {
+      .text(w / 2, 40, "FIGHT NIGHT '96", {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '10px',
-        color: '#a0aec0',
+        color: '#76e4f7',
         fontStyle: '700'
       })
       .setOrigin(0.5, 0);
 
-    this.scoreText = scene.add.text(w / 2, 52, '0 PTS', {
+    this.scoreText = scene.add.text(w / 2, 54, '0 PTS', {
       fontFamily: 'system-ui, sans-serif',
       fontSize: '16px',
       color: '#f6e05e',
@@ -76,6 +85,14 @@ export class UI {
       backgroundColor: '#0b0d12',
       padding: { x: 18, y: 14 }
     }).setOrigin(0.5).setAlpha(0).setDepth(20);
+
+    [this.pLabel, this.dLabel, this.pStBg, this.pSt, this.dHpBg, this.dHp, this.dStBg, this.dSt, this.brand, this.sub, this.scoreText]
+      .forEach((o) => o.setDepth(20));
+  }
+
+  objects() {
+    return [this.panel, this.pLabel, this.dLabel, this.pStBg, this.pSt, this.dHpBg, this.dHp, this.dStBg, this.dSt,
+      this.brand, this.sub, this.scoreText, this.counterText, this.grade];
   }
 
   showResult(title, you, him) {
@@ -130,11 +147,11 @@ export class UI {
 
   update(player, dummy, stats, frozen) {
     this.drawBar(this.pSt, this.pStBg, player.stamina / CONFIG.stamina.max);
-    this.pSt.setFillStyle(player.tired ? 0xed8936 : 0x63b3ed);
+    this.pSt.setFillStyle(player.tired ? 0xed8936 : 0xe53e3e);
 
     this.drawBar(this.dHp, this.dHpBg, dummy.health / CONFIG.dummy.maxHealth);
     this.drawBar(this.dSt, this.dStBg, dummy.stamina / CONFIG.stamina.max);
-    if (dummy.style) this.dLabel.setText(dummy.style.name);
+    if (dummy.style) this.dLabel.setText('WHITE LIGHTNING  ·  ' + dummy.style.name);
     const left = Math.ceil((stats.roundMs || 0) / 1000);
     const you = (stats.landed.jab + stats.landed.cross + stats.landed.body + stats.landed.upper) || 0;
     const him = stats.dummyJabsLanded || 0;
