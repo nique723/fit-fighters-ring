@@ -28,7 +28,8 @@ export class Dummy {
     this.moving = false;
     this.circleDir = 1;
     this.circleMs = 0;
-    this.view = new FighterView(scene, 'o-');
+    this.actionSeq = 0;
+    this.view = new FighterView(scene, 'o');
     this.sparks = scene.add.graphics().setDepth(9);
     this.paint();
   }
@@ -39,24 +40,25 @@ export class Dummy {
     this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' ? 0.12 : 0.05;
     this.flashMs = CONFIG.feel.hitPoseMs;
     this.hitKind = kind;
+    this.actionSeq += 1;
     this.burst(kind);
     if (this.state !== 'idle') { this.state = 'idle'; this.phaseMs = 0; }
   }
   burst(kind) {
     const g = this.sparks;
-    const head = this.view.sprite;
+    const head = this.view.screen;
     g.clear();
     const n = kind === 'cross' || kind === 'upper' ? 9 : 6;
-    const s = head.scaleX / 0.6;
-    const cx = head.x - this.facing * 30 * s;
-    const cy = head.y - (kind === 'body' ? 150 : 225) * s;
+    const s = head.k;
+    const cx = head.x - this.facing * 0.2 * head.ppm;
+    const cy = head.y - (kind === 'body' ? 1.1 : 1.6) * head.ppm;
     g.fillStyle(kind === 'body' ? 0xf6ad55 : 0xf7fafc, 0.95);
     for (let i = 0; i < n; i++) {
       const a = (Math.PI * 2 * i) / n;
       g.fillCircle(cx + Math.cos(a) * (14 + i * 2) * s, cy + Math.sin(a) * 10 * s, (2 + (i % 2)) * s);
     }
   }
-  knockDown() { this.downMs = 2200; this.state = 'idle'; this.knockbackVel = 0; }
+  knockDown() { this.actionSeq += 1; this.downMs = 2200; this.state = 'idle'; this.knockbackVel = 0; }
   nextStyle() {
     this.styleIndex = (this.styleIndex + 1) % CONFIG.styles.length;
     this.resetRing();
@@ -107,9 +109,11 @@ export class Dummy {
     return idleFrame(this.scene.nowMs + 300);
   }
   paint() {
-    this.view.setFrame(this.frameName());
-    this.view.tint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
-    this.view.lean = this.flashMs > 0 ? this.bend * 0.25 : this.bend * 0.5;
+    this.view.setFrame(this.frameName(), {
+      actionId: this.actionSeq,
+      windupMs: this.state === 'startup' ? this.phaseDuration - this.phaseMs : 0,
+      moveDir: this.moveMs < 0 ? -1 : 1
+    });
     this.view.place(this.x, this.z, this.facing);
   }
   update(delta) {
@@ -164,6 +168,7 @@ export class Dummy {
       if (this.cooldown <= 0) {
         this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
         this.state = 'startup';
+        this.actionSeq += 1;
         this.phaseMs = 0;
         this.phaseDuration = Math.max(140, 320 - this.level * 30);
         this.hitThisJab = false;

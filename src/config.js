@@ -9,7 +9,20 @@ export const CONFIG = {
     background: 0x12161c
   },
 
-  // Pre-rendered sprite frames (Blender, 480x504, feet anchor). See tools/sprites.
+  // Live 3D fighters. Clips by name: idle, walk, (walk_back), jab, cross, body, upper,
+  // slip, duck, hithead, hitbody, knockdown. impact = seconds into the clip where the glove lands.
+  world3d: {
+    arena: 'arena/arena-96.webp',
+    camera: { y: -9.4, h: 2.6, pitch: 8, focal: 40 },   // the Blender arena camera
+    fighters: {
+      p: { url: 'fighters3d/p.glb', facing: 1, scale: 1, yawToCamera: 0.1, walkSpeed: 1,
+        impact: { jab: 0.14, cross: 0.2, body: 0.2, upper: 0.22 } },
+      o: { url: 'fighters3d/o.glb', facing: -1, scale: 1, yawToCamera: 0.45, walkSpeed: 1,
+        impact: { jab: 0.14, cross: 0.2, body: 0.2, upper: 0.22 } }
+    }
+  },
+
+  // (legacy) Pre-rendered sprite frames (Blender, 480x504, feet anchor). See tools/sprites.
   sprite: {
     pxPerM: 240,
     anchorX: 0.4,

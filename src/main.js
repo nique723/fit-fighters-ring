@@ -8,24 +8,17 @@ import { Combat } from './combat.js';
 import { UI } from './ui.js';
 import { createStats } from './stats.js';
 import { CameraMode } from './camera.js';
+import { World3D } from './world3d.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
-  preload() {
-    for (const f of CONFIG.sprite.frames) {
-      this.load.image('p-' + f, 'fighters/p/' + f + '.webp');
-      this.load.image('o-' + f, 'fighters/o/' + f + '.webp');
-    }
-    this.load.image('arena', 'arena/arena-96.webp');
-  }
   create() {
     this.nowMs = 0;
-    this.cameras.main.setBackgroundColor(0x07090c);
-    this.drawRing();
+    // arena + fighters render live in three.js underneath this (transparent) canvas
+    this.world3d = new World3D(document.getElementById('stage'), () => this.game.canvas);
     this.player = new Player(this, CONFIG.player.startX, CONFIG.player.startZ);
     this.dummy = new Dummy(this, CONFIG.dummy.startX, CONFIG.dummy.startZ);
     this.dust = this.add.graphics().setDepth(8);
-    this.bulbs = this.add.graphics().setDepth(1).setBlendMode(Phaser.BlendModes.ADD);
     this.bulbMs = 0;
     this.audio = new AudioBus();
     this.inputBus = new InputBus();
@@ -56,10 +49,6 @@ class ArenaScene extends Phaser.Scene {
     document.addEventListener('pointerdown', unlock, { once: true });
     window.addEventListener('keydown', unlock, { once: true });
   }
-  drawRing() {
-    const { width, height } = CONFIG.game;
-    this.arena = this.add.image(width / 2, height / 2, 'arena').setDisplaySize(width, height).setDepth(0);
-  }
   /**
    * Broadcast camera: world camera zooms in and tracks the fighters (tighter when close,
    * wider when they separate). HUD gets its own unzoomed camera.
@@ -73,14 +62,13 @@ class ArenaScene extends Phaser.Scene {
     this.camX = width / 2;
     this.camY = height / 2;
     this.uiCam = this.cameras.add(0, 0, width, height);
-    const world = [this.arena, this.player.view.sprite, this.player.view.shadow,
-      this.dummy.view.sprite, this.dummy.view.shadow, this.dummy.sparks, this.dust, this.bulbs];
+    const world = [this.dummy.sparks, this.dust];
     this.uiCam.ignore(world);
     cam.ignore(this.ui.objects());
   }
   directCamera(dt) {
     const C = CONFIG.camera;
-    const a = this.player.view.shadow, b = this.dummy.view.shadow;
+    const a = this.player.view.screen, b = this.dummy.view.screen;
     const dist = Math.abs(a.x - b.x) + Math.abs(a.y - b.y) * 2;
     const want = Phaser.Math.Clamp(C.maxZoom - Math.max(0, dist - C.closeDist) / C.zoomOutPer, C.minZoom, C.maxZoom);
     const k = 1 - Math.pow(1 - C.follow, dt / 16.7);
@@ -94,18 +82,11 @@ class ArenaScene extends Phaser.Scene {
   }
   /** 90s fight-night crowd: camera flashbulbs popping in the stands. Big shots set off a burst. */
   flashBulbs(delta, burst = 0) {
-    const g = this.bulbs;
     this.bulbMs -= delta;
     if (this.bulbMs > 0 && !burst) return;
-    g.clear();
     const n = burst || (Math.random() < 0.55 ? 1 : 0);
     for (let i = 0; i < n; i++) {
-      const x = 20 + Math.random() * 920;
-      const y = 40 + Math.random() * 250;
-      const r = 2 + Math.random() * 3;
-      g.fillStyle(0xbfdfff, 0.08); g.fillCircle(x, y, r * 7);
-      g.fillStyle(0xffffff, 0.18); g.fillCircle(x, y, r * 3.5);
-      g.fillStyle(0xffffff, 0.9); g.fillCircle(x, y, r);
+      this.world3d.flash(20 + Math.random() * 920, 40 + Math.random() * 250, 2 + Math.random() * 3);
     }
     this.bulbMs = burst ? 70 : 110 + Math.random() * 260;
   }
@@ -131,6 +112,9 @@ class ArenaScene extends Phaser.Scene {
     this.flashBulbs(dt);
     this.directCamera(dt);
     this.ui.update(this.player, this.dummy, this.stats, this.combat.frozen);
+    const cam = this.cameras.main;
+    // hitstop freezes the bodies too
+    this.world3d.render(this.combat.frozen ? 0 : dt, cam.worldView, cam.shakeEffect.isRunning ? cam.shakeEffect._offsetX / cam.zoom : 0, cam.shakeEffect.isRunning ? cam.shakeEffect._offsetY / cam.zoom : 0);
   }
 }
 
@@ -139,7 +123,7 @@ const game = new Phaser.Game({
   parent: 'game-root',
   width: CONFIG.game.width,
   height: CONFIG.game.height,
-  backgroundColor: '#07090c',
+  transparent: true,
   pixelArt: false,
   antialias: true,
   fps: { target: 60, forceSetTimeOut: false },

@@ -22,7 +22,8 @@ export class Player {
     this.flashMs = 0;
     this.hitKind = 'jab';
     this.moveMs = 0;
-    this.view = new FighterView(scene, 'p-');
+    this.actionSeq = 0;
+    this.view = new FighterView(scene, 'p');
     this.paint();
   }
   get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }
@@ -40,6 +41,7 @@ export class Player {
     if (!(this.canAct() || this.canLink()) || this.stamina < spec.staminaCost) return false;
     this.spendStamina(spec.staminaCost);
     this.punchType = type;
+    this.actionSeq += 1;
     this.hitThisPunch = false;
     this.connectedThisPunch = false;
     this.state = 'startup';
@@ -51,6 +53,7 @@ export class Player {
     if (!this.canAct() || this.stamina < CONFIG.duck.staminaCost) return false;
     this.spendStamina(CONFIG.duck.staminaCost);
     this.state = 'ducking';
+    this.actionSeq += 1;
     this.phaseMs = 0;
     this.phaseDuration = CONFIG.duck.duration;
     return true;
@@ -60,6 +63,7 @@ export class Player {
     if (!this.canAct() || this.stamina < CONFIG.slip.staminaCost) return false;
     this.spendStamina(CONFIG.slip.staminaCost);
     this.state = 'slipping';
+    this.actionSeq += 1;
     this.phaseMs = 0;
     this.phaseDuration = CONFIG.slip.duration;
     this.slipOriginX = this.x;
@@ -80,6 +84,7 @@ export class Player {
   takeDummyHit(kind) {
     this.flashMs = CONFIG.feel.hitPoseMs;
     this.hitKind = kind;
+    this.actionSeq += 1;
     this.x -= this.facing * 10;
   }
   update(delta, axis, depthAxis = 0) {
@@ -143,8 +148,11 @@ export class Player {
     return idleFrame(this.scene.nowMs);
   }
   paint() {
-    this.view.setFrame(this.frameName());
-    this.view.tint(this.tired ? 0xffd9c0 : 0xffffff);
+    this.view.setFrame(this.frameName(), {
+      actionId: this.actionSeq,
+      windupMs: this.state === 'startup' ? this.phaseDuration - this.phaseMs : 0,
+      moveDir: this.moveMs < 0 ? -1 : 1
+    });
     this.view.place(this.x, this.z, this.facing);
   }
   regen(delta, now) {
