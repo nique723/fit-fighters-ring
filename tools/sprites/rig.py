@@ -6,6 +6,7 @@ SPEC = {
  'crimson': dict(height=1.85, hipx=0.055, kneex=0.068, anklex=0.077, sh=(0.79,0.105), el=(0.60,0.155), wr=(0.505,0.19), tip=(0.43,0.21)),
  'white':   dict(height=1.83, hipx=0.06,  kneex=0.09,  anklex=0.112, sh=(0.79,0.105), el=(0.60,0.137), wr=(0.505,0.15), tip=(0.43,0.17)),
  'champ':   dict(height=1.85, hipx=0.105, kneex=0.144, anklex=0.19,  sh=(0.775,0.237), el=(0.69,0.437), wr=(0.61,0.645), tip=(0.535,0.731), kneez=0.305, split_legs=True),
+ 'contender': dict(height=1.85, hipx=0.105, kneex=0.139, anklex=0.20, sh=(0.775,0.237), el=(0.66,0.38), wr=(0.56,0.532), tip=(0.48,0.57), kneez=0.29, split_legs=True),
 }
 
 def load(name, fbx, gloves=None):
