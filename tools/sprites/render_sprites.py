@@ -10,6 +10,8 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 ob,arm,J=rig.load(name,fbx)
 if name=='crimson': rig.add_gloves(arm)
 tg=pose.setup_ik(arm)
+# crimson/white were tuned by eye with the default pole angles; new models self-check.
+if name not in ('crimson','white'): pose.calibrate_poles(arm,tg,poses.POSES['duck'])
 scene_util.light_rig()
 RW,RH=480,504
 cam=scene_util.sprite_camera(8, 2.0, RW, RH, 0.2, 1.0)

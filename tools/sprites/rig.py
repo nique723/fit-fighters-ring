@@ -5,7 +5,7 @@ from mathutils import Vector
 SPEC = {
  'crimson': dict(height=1.85, hipx=0.055, kneex=0.068, anklex=0.077, sh=(0.79,0.105), el=(0.60,0.155), wr=(0.505,0.19), tip=(0.43,0.21)),
  'white':   dict(height=1.83, hipx=0.06,  kneex=0.09,  anklex=0.112, sh=(0.79,0.105), el=(0.60,0.137), wr=(0.505,0.15), tip=(0.43,0.17)),
- 'champ':   dict(height=1.85, hipx=0.105, kneex=0.144, anklex=0.19,  sh=(0.775,0.237), el=(0.69,0.437), wr=(0.61,0.645), tip=(0.535,0.731)),
+ 'champ':   dict(height=1.85, hipx=0.105, kneex=0.144, anklex=0.19,  sh=(0.775,0.237), el=(0.69,0.437), wr=(0.61,0.645), tip=(0.535,0.731), kneez=0.305, split_legs=True),
 }
 
 def load(name, fbx, gloves=None):
@@ -50,9 +50,19 @@ def load(name, fbx, gloves=None):
         J['wr'+s]=cen(sp['wr'][0],sp['wr'][1],side,0.035)
         J['tip'+s]=cen(sp['tip'][0],sp['tip'][1],side,0.035)
         J['hip'+s]=cen(0.47,sp['hipx'],side,0.03); J['hip'+s].z=0.49*H
-        J['knee'+s]=cen(0.28,sp['kneex'],side,0.03)
+        J['knee'+s]=cen(sp.get('kneez',0.28),sp['kneex'],side,0.03)
         J['ank'+s]=cen(0.05,sp['anklex'],side,0.03)
         J['toe'+s]=Vector((J['ank'+s].x, v[:,1].min()*0.9, 0.01*H))
+    # Loose trunks can throw one hip slice off (only the back of the shorts lands in the
+    # window). Hips must be symmetric: if they disagree, take the pelvis depth for both.
+    if abs(J['hipL'].y-J['hipR'].y)>0.03*H:
+        J['hipL'].y=J['hipR'].y=J['pelvis'].y
+    # IK bends a leg the way its rest pose is already bent, so keep each knee in front (-Y)
+    # of its hip-ankle line or the knee folds backwards.
+    for s in 'LR':
+        hp,kn,an=J['hip'+s],J['knee'+s],J['ank'+s]
+        t=(hp.z-kn.z)/max(1e-6,hp.z-an.z); line_y=hp.y+(an.y-hp.y)*t
+        if kn.y>line_y-0.02*H: kn.y=line_y-0.02*H
     # armature
     ad=bpy.data.armatures.new(name+'_arm'); arm=bpy.data.objects.new(name+'_rig',ad)
     bpy.context.scene.collection.objects.link(arm)
@@ -121,6 +131,24 @@ def load(name, fbx, gloves=None):
             if best is None or dd<best[0]: best=(dd,n)
         g=ob.vertex_groups.get(best[1]) or ob.vertex_groups.new(name=best[1])
         g.add([vv.index],1.0,'REPLACE')
+    if sp.get('split_legs'):
+        # loose trunks: heat weights bleed across the gap between the legs and web them
+        # together. Drop leg weights from the opposite side, then renormalize.
+        bad={}
+        for sfx,sign in (('L',1),('R',-1)):
+            for n in ('thigh','shin','foot'):
+                g=ob.vertex_groups.get(n+'.'+sfx)
+                if g: bad[g.index]=sign
+        for vv in ob.data.vertices:
+            drop=[e.group for e in vv.groups if e.group in bad and vv.co.x*bad[e.group]<0]
+            if not drop: continue
+            for gi in drop: ob.vertex_groups[gi].remove([vv.index])
+            tot=sum(e.weight for e in vv.groups)
+            if tot<=0.01:
+                side='L' if vv.co.x>0 else 'R'
+                ob.vertex_groups['thigh.'+side].add([vv.index],1.0,'REPLACE')
+            else:
+                for e in vv.groups: e.weight/=tot
     unw=sum(1 for vv in ob.data.vertices if not any(e.weight>0.01 for e in vv.groups))
     print('RIG',name,'unweighted verts',unw,'of',len(ob.data.vertices))
     return ob, arm, J

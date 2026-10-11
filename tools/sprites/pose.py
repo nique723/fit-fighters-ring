@@ -65,3 +65,21 @@ def apply(arm, tg, pose):
     for k in ['lh','rh','lp','rp','lf','rf','lk','rk']:
         f,l,u=p[k]; tg[k].location=arm.matrix_world@P(f,l,u)
     bpy.context.view_layer.update()
+
+def calibrate_poles(arm, tg, pose):
+    """Pole angles assume a particular bone roll / rest bend. On a new model a limb can
+    come out bent exactly away from its pole (knees folding backwards). Pose once, check
+    each limb's mid joint against its pole target, and flip the angle 180 deg if needed."""
+    apply(arm, tg, pose)
+    pb=arm.pose.bones; mw=arm.matrix_world; flipped=[]
+    for root,mid,pk in (('upper_arm.L','forearm.L','lp'),('upper_arm.R','forearm.R','rp'),
+                        ('thigh.L','shin.L','lk'),('thigh.R','shin.R','rk')):
+        a=mw@pb[root].head; j=mw@pb[mid].head; e=mw@pb[mid].tail
+        ax=(e-a).normalized(); off=j-(a+ax*((j-a).dot(ax)))
+        pl=tg[pk].matrix_world.translation; plo=pl-(a+ax*((pl-a).dot(ax)))
+        if off.length>0.02 and off.dot(plo)<0:
+            c=[c for c in pb[mid].constraints if c.type=='IK'][0]
+            c.pole_angle+=math.pi; flipped.append(mid)
+    bpy.context.view_layer.update()
+    print('POLES flipped:',flipped)
+    return flipped
