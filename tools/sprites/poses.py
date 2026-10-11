@@ -24,3 +24,7 @@ POSES['duck']=V(drop=0.40,yaw_p=-40,lean=26,lf=(0.34,0.16,0),rf=(-0.30,-0.18,0),
 POSES['hithead']=V(drop=0.10,yaw_p=-32,lean=-10,head=-28,head_side=8,shift=(-0.06,0,0),lh=(0.30,0.20,1.32),rh=(0.08,-0.24,1.32),lp=(0.0,0.5,0.8),rp=(-0.2,-0.5,0.8))
 POSES['hitbody']=V(drop=0.20,yaw_p=-34,lean=30,head=10,shift=(-0.04,0,0),lh=(0.30,0.08,1.10),rh=(0.22,-0.10,1.08),lp=(0.0,0.5,0.7),rp=(-0.2,-0.5,0.7))
 POSES['kneel']=V(drop=0.56,yaw_p=-30,lean=14,head=8,lf=(0.32,0.14,0),rf=(-0.46,-0.16,0.06),rk=(0.2,-0.2,-0.6),lk=(1,0.4,0.6),shift=(-0.05,0,0),lh=(0.38,0.12,0.55),rh=(0.16,-0.16,0.78),lp=(0.1,0.5,0.6),rp=(-0.2,-0.5,0.6))
+# lead hook to the head: load on the lead leg, then hips and shoulders whip through with the
+# elbow up at shoulder height and the lead foot pivoting on the ball.
+POSES['hook0']=V(drop=0.16,yaw_p=-22,yaw_c=6,lean=8,side=6,shift=(0.03,0,0),lh=(0.34,0.26,1.40),lp=(0.05,0.9,1.30),rh=(0.20,-0.08,1.50))
+POSES['hook1']=V(drop=0.13,yaw_p=-66,yaw_c=-18,lean=9,side=-3,shift=(0.05,0,0),lyaw=-58,lh=(0.50,-0.06,1.50),lp=(0.25,0.9,1.50),rh=(0.16,-0.10,1.50),rp=(-0.2,-0.5,0.9))

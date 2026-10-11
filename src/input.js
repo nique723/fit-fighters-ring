@@ -2,10 +2,12 @@
  * Desktop keys + mobile thumb buttons.
  * Movement is held (left/right + in/out of the ring). Punches and slip are edge-triggered.
  */
+import { CONFIG } from './config.js';
+
 export class InputBus {
   constructor() {
     this.held = { left: false, right: false, up: false, down: false };
-    this.queued = { jab: false, cross: false, body: false, upper: false, slip: false, duck: false };
+    this.queued = { jab: false, cross: false, hook: false, body: false, upper: false, slip: false, duck: false };
     this.debugPressed = false;
     this.instant = false;
     this.isTouch = false;
@@ -74,7 +76,7 @@ export class InputBus {
   onKeyDown(e) {
     if (e.repeat) return;
     const k = e.key.toLowerCase();
-    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's', 'i', 'j', 'k', 'l', 'u'].includes(k) || e.code === 'Space') {
+    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's', 'i', 'j', 'k', 'l', 'u', 'h'].includes(k) || e.code === 'Space') {
       e.preventDefault();
     }
     if (k === 'a' || e.code === 'ArrowLeft') this.held.left = true;
@@ -83,6 +85,7 @@ export class InputBus {
     if (k === 's' || e.code === 'ArrowDown') this.held.down = true;
     if (k === 'j') this.queued.jab = true;
     if (k === 'k') this.queued.cross = true;
+    if (k === 'h') this.queued.hook = true;
     if (k === 'l') this.queued.body = true;
     if (k === 'u') this.queued.upper = true;
     if (k === ' ' || e.code === 'Space') this.queued.slip = true;
@@ -105,31 +108,13 @@ export class InputBus {
   }
 
   peekPunch() {
-    if (this.queued.jab) return 'jab';
-    if (this.queued.cross) return 'cross';
-    if (this.queued.body) return 'body';
-    if (this.queued.upper) return 'upper';
-    return null;
+    return CONFIG.punchOrder.find((p) => this.queued[p]) || null;
   }
 
   consumePunch() {
-    if (this.queued.jab) {
-      this.queued.jab = false;
-      return 'jab';
-    }
-    if (this.queued.cross) {
-      this.queued.cross = false;
-      return 'cross';
-    }
-    if (this.queued.body) {
-      this.queued.body = false;
-      return 'body';
-    }
-    if (this.queued.upper) {
-      this.queued.upper = false;
-      return 'upper';
-    }
-    return null;
+    const p = this.peekPunch();
+    if (p) this.queued[p] = false;
+    return p;
   }
 
   consumeSlip() {

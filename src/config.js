@@ -16,7 +16,7 @@ export const CONFIG = {
     anchorY: 0.9716,
     frames: ['idle0', 'idle1', 'idle2', 'idle3', 'walk0', 'walk1', 'walk2', 'walk3',
       'jab0', 'jab1', 'cross0', 'cross1', 'body0', 'body1', 'upper0', 'upper1',
-      'slip', 'duck', 'hithead', 'hitbody', 'kneel']
+      'hook0', 'hook1', 'slip', 'duck', 'hithead', 'hitbody', 'kneel']
   },
 
   // Broadcast camera (zoom 1 = whole arena visible).
@@ -33,7 +33,7 @@ export const CONFIG = {
     leftBound: 70,
     rightBound: 890,
     minGap: 125,          // x gap kept when fighters share a lane
-    laneTolerance: 0.14,  // |dz| a punch can still land across (0..1 depth, ~0.5 m)
+    laneTolerance: 0.14,  // |dz| a punch can still land across (0..1 depth, ~0.5 m). A punch can override with `lane`.
     blockDepth: 0.22,     // |dz| under which fighters can't pass through each other
     depthMin: 0,
     depthMax: 1
@@ -121,6 +121,20 @@ export const CONFIG = {
       bend: 0.28,
       shake: 0.007
     },
+    // Lead hook: the round punch. Short reach, but it sweeps a lane twice as wide,
+    // so it catches an opponent who has stepped off the line. Duck under it.
+    hook: {
+      startup: 190,
+      active: 150,
+      recovery: 290,
+      reach: 170, minReach: 100,
+      lane: 0.28,
+      damage: 8,
+      staminaCost: 14,
+      hitstop: 105,
+      knockback: 16,
+      shake: 0.011
+    },
     upper: {
       startup: 170,
       active: 150,
@@ -135,6 +149,9 @@ export const CONFIG = {
     }
   },
 
+  // Every punch a fighter can throw, in input priority order. Stats and UI read this list.
+  punchOrder: ['jab', 'cross', 'hook', 'body', 'upper'],
+
   slip: {
     duration: 250,
     staminaCost: 8,
@@ -148,9 +165,9 @@ export const CONFIG = {
   },
 
   styles: [
-    { id: 'jabber', name: 'JABBER', weight: { jab: 0.7, cross: 0.2, body: 0.1 }, step: 80 },
-    { id: 'pressure', name: 'PRESSURE', weight: { jab: 0.25, cross: 0.35, body: 0.4 }, step: 140 },
-    { id: 'counter', name: 'COUNTER', weight: { jab: 0.2, cross: 0.6, body: 0.2 }, step: 50 }
+    { id: 'jabber', name: 'JABBER', weight: { jab: 0.65, cross: 0.2, hook: 0.05, body: 0.1 }, step: 80 },
+    { id: 'pressure', name: 'PRESSURE', weight: { jab: 0.2, cross: 0.25, hook: 0.25, body: 0.3 }, step: 140 },
+    { id: 'counter', name: 'COUNTER', weight: { jab: 0.2, cross: 0.45, hook: 0.2, body: 0.15 }, step: 50 }
   ],
 
   feel: {
@@ -163,6 +180,6 @@ export const CONFIG = {
   score: {
     roundMs: 30000,
     rounds: 3,
-    points: { jab: 10, cross: 20, body: 15, upper: 25, counter: 15, knockdown: 50, hit: -5 }
+    points: { jab: 10, cross: 20, hook: 25, body: 15, upper: 25, counter: 15, knockdown: 50, hit: -5 }
   }
 };

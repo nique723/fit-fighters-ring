@@ -81,7 +81,7 @@ export class AudioBus {
       this.noise({ dur: 0.07, gain: 0.3, filterFreq: 480, q: 0.6 });
       return;
     }
-    if (type === 'cross') {
+    if (type === 'cross' || type === 'hook') {
       this.tone({ freq: 95, freqEnd: 38, dur: 0.2, type: 'sine', gain: 0.55, filterFreq: 240 });
       this.noise({ dur: 0.09, gain: 0.42, filterFreq: 520, q: 0.5 });
       this.tone({ freq: 180, freqEnd: 70, dur: 0.08, type: 'triangle', gain: 0.18, filterFreq: 600 });

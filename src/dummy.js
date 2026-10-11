@@ -28,6 +28,7 @@ export class Dummy {
     this.moving = false;
     this.circleDir = 1;
     this.circleMs = 0;
+    this.hookOnly = false;
     this.view = new FighterView(scene, 'o-');
     this.sparks = scene.add.graphics().setDepth(9);
     this.paint();
@@ -36,7 +37,7 @@ export class Dummy {
   get punching() { return this.state === 'active'; }
   flinch(kind, knockback) {
     this.knockbackVel = knockback;
-    this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' ? 0.12 : 0.05;
+    this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' || kind === 'hook' ? 0.12 : 0.05;
     this.flashMs = CONFIG.feel.hitPoseMs;
     this.hitKind = kind;
     this.burst(kind);
@@ -46,7 +47,7 @@ export class Dummy {
     const g = this.sparks;
     const head = this.view.sprite;
     g.clear();
-    const n = kind === 'cross' || kind === 'upper' ? 9 : 6;
+    const n = kind === 'cross' || kind === 'upper' || kind === 'hook' ? 9 : 6;
     const s = head.scaleX / 0.6;
     const cx = head.x - this.facing * 30 * s;
     const cy = head.y - (kind === 'body' ? 150 : 225) * s;
@@ -90,9 +91,10 @@ export class Dummy {
   pickPunch(gap) {
     const w = this.style.weight;
     const roll = Math.random();
-    let type = roll < w.jab ? 'jab' : roll < w.jab + w.cross ? 'cross' : 'body';
-    if (type === 'body' && gap > CONFIG.punches.body.reach) type = 'jab';
-    if (type === 'cross' && gap > CONFIG.punches.cross.reach) type = 'jab';
+    const hookW = w.hook || 0;
+    let type = roll < w.jab ? 'jab' : roll < w.jab + w.cross ? 'cross' : roll < w.jab + w.cross + hookW ? 'hook' : 'body';
+    // out of range for the shot he wanted: fall back to the jab
+    if (type !== 'jab' && gap > CONFIG.punches[type].reach) type = 'jab';
     this.punchType = type;
     return type;
   }
@@ -158,11 +160,15 @@ export class Dummy {
         if (Math.abs(gap - want) > 18 || Math.abs(tz - this.z) > 0.05) {
           this.moving = this.stepToward(tx, tz, speed, delta);
         }
-        if (!aligned || gap > want + 40) return 'none';
+        // Off the line but close: the hook still reaches. Otherwise he has to line up first.
+        const hook = CONFIG.punches.hook;
+        this.hookOnly = !aligned && Math.abs(this.z - player.z) <= hook.lane * 0.85 && gap <= hook.reach;
+        if ((!aligned && !this.hookOnly) || gap > want + 40) return 'none';
       }
       this.cooldown -= delta;
       if (this.cooldown <= 0) {
-        this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
+        if (this.hookOnly) this.punchType = 'hook';
+        else this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
         this.state = 'startup';
         this.phaseMs = 0;
         this.phaseDuration = Math.max(140, 320 - this.level * 30);
@@ -190,9 +196,9 @@ export class Dummy {
     return 'idle';
   }
   inJabRange(player) {
-    if (Math.abs(this.z - player.z) > CONFIG.arena.laneTolerance) return false;
-    const gap = Math.abs(this.x - player.x);
     const spec = CONFIG.punches[this.punchType || 'jab'];
+    if (Math.abs(this.z - player.z) > (spec.lane || CONFIG.arena.laneTolerance)) return false;
+    const gap = Math.abs(this.x - player.x);
     return gap <= spec.reach + 10 && gap >= 80;
   }
 }

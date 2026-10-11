@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { project } from './stage.js';
+import { zeroPunches, sumPunches } from './stats.js';
 
 /**
  * Resolves punches, slips, hitstop, shake, counters.
@@ -127,7 +128,7 @@ export class Combat {
   }
 
   impact(type, damage, counter) {
-    this.scene.zoomKick = type === 'cross' || type === 'upper' ? 0.07 : 0.035;
+    this.scene.zoomKick = type === 'cross' || type === 'upper' || type === 'hook' ? 0.07 : 0.035;
     const lp = project(this.dummy.x, this.dummy.z, type === 'body' ? 1.2 : 1.85);
     const y = lp.y;
     const label = this.scene.add.text(lp.x, y, (counter ? 'COUNTER ' : '') + damage, {
@@ -150,7 +151,7 @@ export class Combat {
   shots() {
     const s = this.stats;
     return {
-      you: s.landed.jab + s.landed.cross + s.landed.body + s.landed.upper,
+      you: sumPunches(s.landed),
       him: s.dummyJabsLanded
     };
   }
@@ -160,7 +161,7 @@ export class Combat {
     this.stats.finished = false;
     this.stats.round = 1;
     this.stats.roundMs = CONFIG.score.roundMs;
-    this.stats.landed = { jab: 0, cross: 0, body: 0, upper: 0 };
+    this.stats.landed = zeroPunches();
     this.stats.dummyJabsLanded = 0;
     this.dummy.level = 2;
     this.dummy.resetRing();

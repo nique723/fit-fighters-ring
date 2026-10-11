@@ -2,11 +2,23 @@
  * Session stats. Later this feeds a coach grade screen.
  * Never reset on dummy knockdown — only on full session reset.
  */
+import { CONFIG } from './config.js';
+
+/** { jab: 0, cross: 0, ... } for every punch in CONFIG.punchOrder. */
+export function zeroPunches() {
+  return Object.fromEntries(CONFIG.punchOrder.map((p) => [p, 0]));
+}
+
+/** Total across all punch types. */
+export function sumPunches(counts) {
+  return CONFIG.punchOrder.reduce((n, p) => n + (counts[p] || 0), 0);
+}
+
 export function createStats() {
   return {
-    thrown: { jab: 0, cross: 0, body: 0, upper: 0 },
-    landed: { jab: 0, cross: 0, body: 0, upper: 0 },
-    whiffs: { jab: 0, cross: 0, body: 0, upper: 0 },
+    thrown: zeroPunches(),
+    landed: zeroPunches(),
+    whiffs: zeroPunches(),
     slipsAttempted: 0,
     slipsSuccessful: 0,
     countersLanded: 0,
@@ -37,10 +49,8 @@ export function formatStats(stats, extras) {
     `COUNTER   ${extras.counterReady ? 'OPEN' : '—'}`,
     `FROZEN    ${extras.frozen ? 'HITSTOP' : 'no'}`,
     ``,
-    `JAB       T${stats.thrown.jab}  L${stats.landed.jab}  W${stats.whiffs.jab}  ${pct(stats.landed.jab, stats.thrown.jab)}`,
-    `CROSS     T${stats.thrown.cross}  L${stats.landed.cross}  W${stats.whiffs.cross}  ${pct(stats.landed.cross, stats.thrown.cross)}`,
-    `BODY      T${stats.thrown.body}  L${stats.landed.body}  W${stats.whiffs.body}  ${pct(stats.landed.body, stats.thrown.body)}`,
-    `UPPER     T${stats.thrown.upper}  L${stats.landed.upper}  W${stats.whiffs.upper}  ${pct(stats.landed.upper, stats.thrown.upper)}`,
+    ...CONFIG.punchOrder.map((p) =>
+      `${p.toUpperCase().padEnd(10)}T${stats.thrown[p]}  L${stats.landed[p]}  W${stats.whiffs[p]}  ${pct(stats.landed[p], stats.thrown[p])}`),
     ``,
     `SLIPS     ${stats.slipsSuccessful} / ${stats.slipsAttempted}`,
     `COUNTERS  ${stats.countersLanded}`,

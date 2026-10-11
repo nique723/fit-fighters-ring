@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { formatStats } from './stats.js';
+import { formatStats, sumPunches } from './stats.js';
 
 export class UI {
   constructor(scene) {
@@ -102,14 +102,12 @@ export class UI {
 
   showGrade(stats, beaten, next, done) {
     const pct = (l, t) => t ? Math.round((l / t) * 100) + '%' : '—';
-    const thrown = stats.thrown.jab + stats.thrown.cross + stats.thrown.body + stats.thrown.upper;
-    const landed = stats.landed.jab + stats.landed.cross + stats.landed.body + stats.landed.upper;
+    const thrown = sumPunches(stats.thrown);
+    const landed = sumPunches(stats.landed);
+    const name = (p) => p[0].toUpperCase() + p.slice(1);
     this.grade.setText([
       beaten + ' DOWN',
-      'Jab ' + pct(stats.landed.jab, stats.thrown.jab),
-      'Cross ' + pct(stats.landed.cross, stats.thrown.cross),
-      'Body ' + pct(stats.landed.body, stats.thrown.body),
-      'Upper ' + pct(stats.landed.upper, stats.thrown.upper),
+      ...CONFIG.punchOrder.map((p) => name(p) + ' ' + pct(stats.landed[p], stats.thrown[p])),
       'Landed ' + landed + '/' + thrown + '   Counters ' + stats.countersLanded,
       'Next: ' + next
     ].join('\n')).setAlpha(1);
@@ -153,7 +151,7 @@ export class UI {
     this.drawBar(this.dSt, this.dStBg, dummy.stamina / CONFIG.stamina.max);
     if (dummy.style) this.dLabel.setText('WHITE LIGHTNING  ·  ' + dummy.style.name);
     const left = Math.ceil((stats.roundMs || 0) / 1000);
-    const you = (stats.landed.jab + stats.landed.cross + stats.landed.body + stats.landed.upper) || 0;
+    const you = sumPunches(stats.landed);
     const him = stats.dummyJabsLanded || 0;
     this.sub.setText('ROUND ' + (stats.round || 1) + ' / 3  ·  0:' + String(left).padStart(2, '0'));
     this.scoreText.setText(you + '  –  ' + him);

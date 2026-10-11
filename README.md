@@ -19,11 +19,13 @@ Open the URL Vite prints (usually `http://localhost:5173`).
 ## Controls
 
 - WASD / arrows — move (W/S = in/out of the ring)
-- J jab · K cross · L body · U uppercut
+- J jab · K cross · H lead hook · L body · U uppercut
 - Space — slip · I (or Shift) — duck
 - ` — debug overlay
 
-You can move before the bell. Touch devices get a D-pad and six punch/defense buttons.
+You can move before the bell. Touch devices get a D-pad and seven punch/defense buttons.
+
+The lead hook is the round punch: shorter reach than the straights, but it sweeps twice the lane width (`punches.hook.lane`), so it catches an opponent who stepped off the line. Duck under it.
 
 Camera is optional. Press **Camera**, allow the webcam, hold guard 2 seconds, throw one jab. Pose runs on-device. Video never leaves the browser.
 

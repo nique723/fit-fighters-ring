@@ -70,10 +70,10 @@ export class Player {
   hasCounter(now) { return now < this.counterUntil; }
   consumeCounter(now) { const open = this.hasCounter(now); this.counterUntil = 0; return open; }
   rangeTo(dummy) { return Math.abs(dummy.x - this.x); }
-  inLane(dummy) { return Math.abs(dummy.z - this.z) <= CONFIG.arena.laneTolerance; }
+  inLane(dummy, lane = CONFIG.arena.laneTolerance) { return Math.abs(dummy.z - this.z) <= lane; }
   inReach(dummy) {
     const spec = CONFIG.punches[this.punchType];
-    if (!spec || !this.inLane(dummy)) return false;
+    if (!spec || !this.inLane(dummy, spec.lane)) return false;
     const gap = this.rangeTo(dummy);
     return gap <= spec.reach && gap >= (spec.minReach || 90);
   }
