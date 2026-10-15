@@ -22,6 +22,7 @@ export class Player {
     this.flashMs = 0;
     this.hitKind = 'jab';
     this.moveMs = 0;
+    this.weightX = 0;
     this.view = new FighterView(scene, 'p-');
     this.paint();
   }
@@ -40,6 +41,7 @@ export class Player {
     if (!(this.canAct() || this.canLink()) || this.stamina < spec.staminaCost) return false;
     this.spendStamina(spec.staminaCost);
     this.punchType = type;
+    this.weightX = type === 'cross' ? 18 : type === 'upper' ? 14 : type === 'body' ? 10 : 6;
     this.hitThisPunch = false;
     this.connectedThisPunch = false;
     this.state = 'startup';
@@ -87,6 +89,11 @@ export class Player {
     if (this.state === 'slipping') {
       const t = Math.min(1, this.phaseMs / this.phaseDuration);
       this.x = this.slipOriginX - this.facing * Math.abs(CONFIG.player.slipX) * Math.sin(t * Math.PI);
+    }
+    if (this.weightX) {
+      this.x += this.facing * this.weightX * 0.18;
+      this.weightX *= 0.86;
+      if (Math.abs(this.weightX) < 0.4) this.weightX = 0;
     }
     if (this.canAct()) {
       const moving = axis !== 0 || depthAxis !== 0;
