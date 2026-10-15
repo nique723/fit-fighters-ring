@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
 
@@ -142,9 +142,9 @@ export class Player {
     const shot = this.punchType || 'jab';
     if (this.state === 'slipping') return 'slip';
     if (this.state === 'ducking') return 'duck';
-    if (this.state === 'startup') return shot + '0';
-    if (this.state === 'active') return shot + '1';
-    if (this.state === 'recovery') return this.phaseMs < this.phaseDuration * 0.5 ? shot + '0' : idleFrame(this.scene.nowMs);
+    if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
+      return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
+    }
     if (this.flashMs > 0) return this.hitKind === 'body' ? 'hitbody' : 'hithead';
     if (this.state === 'moving') return walkFrame(this.moveMs);
     return idleFrame(this.scene.nowMs);

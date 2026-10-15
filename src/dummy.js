@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
 
 export class Dummy {
   constructor(scene, x, z) {
@@ -102,9 +102,9 @@ export class Dummy {
     if (this.downMs > 0) return 'kneel';
     if (this.flashMs > 0) return this.hitKind === 'body' ? 'hitbody' : 'hithead';
     const shot = this.punchType || 'jab';
-    if (this.state === 'startup') return shot + '0';
-    if (this.state === 'active') return shot + '1';
-    if (this.state === 'recovery') return shot + '0';
+    if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
+      return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
+    }
     if (this.moving) return walkFrame(this.moveMs);
     return idleFrame(this.scene.nowMs + 300);
   }
@@ -152,7 +152,7 @@ export class Dummy {
         // counter style likes to circle; everyone drifts a little so the lane is never static
         this.circleMs -= delta;
         if (this.circleMs <= 0) { this.circleDir = Math.random() < 0.5 ? -1 : 1; this.circleMs = 900 + Math.random() * 1400; }
-        const drift = this.style.id === 'counter' ? 0.10 : 0.04;
+        const drift = this.style.id === 'counter' ? 0.22 : this.style.id === 'pressure' ? 0.16 : 0.10;
         const tz = Phaser.Math.Clamp(player.z + this.circleDir * drift, 0, 1);
         const aligned = Math.abs(this.z - player.z) <= CONFIG.arena.laneTolerance * 0.8;
         const tx = player.x + side * want;

@@ -52,3 +52,11 @@ export function idleFrame(ms) {
 export function walkFrame(ms) {
   return 'walk' + (((Math.floor(ms / 95) % 4) + 4) % 4);
 }
+
+/** Four pictures per punch: load, turn, land, come home. */
+export function punchFrame(shot, state, phase, dur) {
+  const t = dur > 0 ? phase / dur : 0;
+  if (state === 'startup') return shot + (t < 0.55 ? '0' : '1');
+  if (state === 'active') return shot + (t < 0.5 ? '2' : '3');
+  return t < 0.4 ? shot + '1' : idleFrame(0);
+}

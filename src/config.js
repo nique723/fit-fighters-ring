@@ -15,8 +15,9 @@ export const CONFIG = {
     anchorX: 0.4,
     anchorY: 0.9716,
     frames: ['idle0', 'idle1', 'idle2', 'idle3', 'walk0', 'walk1', 'walk2', 'walk3',
-      'jab0', 'jab1', 'cross0', 'cross1', 'body0', 'body1', 'upper0', 'upper1',
-      'hook0', 'hook1', 'slip', 'duck', 'hithead', 'hitbody', 'kneel']
+      'jab0', 'jab1', 'jab2', 'jab3', 'cross0', 'cross1', 'cross2', 'cross3',
+      'body0', 'body1', 'body2', 'body3', 'upper0', 'upper1', 'upper2', 'upper3',
+      'hook0', 'hook1', 'hook2', 'hook3', 'slip', 'duck', 'hithead', 'hitbody', 'kneel']
   },
 
   // Broadcast camera (zoom 1 = whole arena visible).
