@@ -166,11 +166,14 @@ export class Combat {
     this.dummy.level = 2;
     this.dummy.resetRing();
     this.ui.grade.setAlpha(0);
+    this.audio.bell();
+    this.audio.crowdFight();
   }
 
   stop() {
     this.stats.running = false;
     this.stats.finished = true;
+    this.audio.crowdIdle();
     const n = this.shots();
     this.ui.showResult('STOPPED', n.you, n.him);
   }
@@ -182,6 +185,8 @@ export class Combat {
     if (this.stats.round >= CONFIG.score.rounds) {
       this.stats.running = false;
       this.stats.finished = true;
+      this.audio.bell();
+      this.audio.crowdIdle();
       const n = this.shots();
       this.ui.showResult('3 ROUNDS', n.you, n.him);
       return;
@@ -189,7 +194,12 @@ export class Combat {
     this.stats.round += 1;
     this.stats.roundMs = CONFIG.score.roundMs;
     this.dummy.level = this.stats.round + 1;
-    this.audio.telegraph();
+    this.audio.bell();
+  }
+
+  /** Footwork sound while the player is moving. */
+  footwork(input) {
+    if (input.axis() || input.depthAxis()) this.audio.step(this.scene.nowMs);
   }
 
   update(delta, input) {
@@ -197,6 +207,7 @@ export class Combat {
       // free roam before the bell: warm up, learn the ring
       this.updateFacing();
       this.player.update(delta, input.axis(), input.depthAxis());
+      this.footwork(input);
       this.keepSeparation();
       this.dummy.paint();
       return;
@@ -233,6 +244,7 @@ export class Combat {
 
     this.updateFacing();
     this.player.update(delta, input.axis(), input.depthAxis());
+    this.footwork(input);
     this.player.regen(delta, this.scene.nowMs);
     this.tickRound(delta);
     this.dummy.update(delta);
