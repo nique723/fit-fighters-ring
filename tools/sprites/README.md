@@ -7,7 +7,7 @@ pip install bpy==5.2.2          # Blender as a Python module (Python 3.13)
 python3 make_tex.py             # banners, canvas logo, apron → tex/
 python3 render_sprites.py crimson path/to/Crimson_Guard.fbx out/crimson
 python3 render_sprites.py white   path/to/White_Lightning.fbx out/white
-python3 render_mocap.py rising path/to/Rising.glb path/to/anims/ out/rising   # Meshy-rigged GLB + Mixamo FBX clips
+python3 render_mocap.py kamarian path/to/Kamarian.glb path/to/anims/ out/kamarian   # Meshy-rigged GLB + Mixamo FBX clips
 RW=1440 SAMPLES=24 HAZE=0.016 FSTOP=1.2 OUT=arena.png python3 arena.py
 ```
 
@@ -27,4 +27,4 @@ For Meshy models that come **already rigged** (Mixamo bone names) plus Mixamo FB
 - Gloves are added (`glove` colour in the spec). Fists come from the mocap.
 - Convert PNG -> WebP (q82) into `public/fighters/<id>/` and add `{ id, name }` to `CONFIG.roster`.
 
-Rising (`rising`): Jab_Cross (idle, jab, cross), Boxing (hook), Boxing_3 (body), Medium_Step_Forward (walk). Uppercut, slip, duck, hit reactions and knockdown are still IK.
+Kamarian (`kamarian`): Jab_Cross (idle, jab, cross), Boxing (hook), Boxing_3 (body), Medium_Step_Forward (walk). Uppercut, slip, duck, hit reactions and knockdown are still IK.

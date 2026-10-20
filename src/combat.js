@@ -72,11 +72,12 @@ export class Combat {
     if (counter) this.stats.points += CONFIG.score.points.counter;
 
     const mul = counter ? CONFIG.slip.counterDamageMul : 1;
-    const damage = spec.damage * mul;
+    // attacker power x defender chin; one decimal so the popup matches health removed
+    const damage = Math.round(spec.damage * mul * this.player.mods.power * this.dummy.mods.taken * 10) / 10;
     const drain = type === 'body' ? spec.staminaDrain : 0;
     const dead = this.dummy.takeHit(damage, drain);
 
-    this.dummy.flinch(type, spec.knockback);
+    this.dummy.flinch(type, spec.knockback * this.player.mods.power);
     this.hitstop(spec.hitstop);
     this.shake(spec.shake);
     const hp = project((this.player.x + this.dummy.x) / 2, this.dummy.z, type === 'body' ? 1.05 : 1.5);
@@ -120,7 +121,7 @@ export class Combat {
       this.dummy.hitThisJab = true;
       this.stats.dummyJabsLanded += 1;
       this.stats.points = Math.max(0, this.stats.points + CONFIG.score.points.hit);
-      this.player.takeDummyHit(this.dummy.punchType);
+      this.player.takeDummyHit(this.dummy.punchType, this.dummy.mods.power);
       this.hitstop(50);
       this.shake(0.003);
       this.audio.dummyHit();

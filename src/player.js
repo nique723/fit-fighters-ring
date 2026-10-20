@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
+import { modsFor } from './ratings.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
 
@@ -24,7 +25,13 @@ export class Player {
     this.moveMs = 0;
     this.weightX = 0;
     this.view = new FighterView(scene, (scene.fighters?.player ?? 'p') + '-');
+    this.setFighter(scene.fighters?.player ?? 'p');
     this.paint();
+  }
+  setFighter(id) {
+    this.fighterId = id;
+    this.mods = modsFor(id);
+    this.view.setFighter(id);
   }
   get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }
   get busy() { return ACTION_STATES.has(this.state); }
@@ -38,20 +45,22 @@ export class Player {
   spendStamina(cost) { this.stamina = Math.max(0, this.stamina - cost); this.lastActionAt = this.scene.nowMs; }
   tryPunch(type, instant) {
     const spec = CONFIG.punches[type];
-    if (!(this.canAct() || this.canLink()) || this.stamina < spec.staminaCost) return false;
-    this.spendStamina(spec.staminaCost);
+    const cost = spec.staminaCost * this.mods.cost;
+    if (!(this.canAct() || this.canLink()) || this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.punchType = type;
     this.weightX = type === 'cross' ? 18 : type === 'upper' ? 14 : type === 'body' ? 10 : 6;
     this.hitThisPunch = false;
     this.connectedThisPunch = false;
     this.state = 'startup';
     this.phaseMs = 0;
-    this.phaseDuration = instant ? 0 : this.scaled(spec.startup);
+    this.phaseDuration = instant ? 0 : this.scaled(spec.startup * this.mods.speed);
     return true;
   }
   tryDuck() {
-    if (!this.canAct() || this.stamina < CONFIG.duck.staminaCost) return false;
-    this.spendStamina(CONFIG.duck.staminaCost);
+    const cost = CONFIG.duck.staminaCost * this.mods.cost;
+    if (!this.canAct() || this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.state = 'ducking';
     this.phaseMs = 0;
     this.phaseDuration = CONFIG.duck.duration;
@@ -59,8 +68,9 @@ export class Player {
   }
   isDucking() { return this.state === 'ducking'; }
   trySlip() {
-    if (!this.canAct() || this.stamina < CONFIG.slip.staminaCost) return false;
-    this.spendStamina(CONFIG.slip.staminaCost);
+    const cost = CONFIG.slip.staminaCost * this.mods.cost;
+    if (!this.canAct() || this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.state = 'slipping';
     this.phaseMs = 0;
     this.phaseDuration = CONFIG.slip.duration;
@@ -77,12 +87,12 @@ export class Player {
     const spec = CONFIG.punches[this.punchType];
     if (!spec || !this.inLane(dummy, spec.lane)) return false;
     const gap = this.rangeTo(dummy);
-    return gap <= spec.reach && gap >= (spec.minReach || 90);
+    return gap <= spec.reach * this.mods.reach && gap >= (spec.minReach || 90);
   }
-  takeDummyHit(kind) {
+  takeDummyHit(kind, power = 1) {
     this.flashMs = CONFIG.feel.hitPoseMs;
     this.hitKind = kind;
-    this.x -= this.facing * 10;
+    this.x -= this.facing * 10 * power * this.mods.taken;
   }
   update(delta, axis, depthAxis = 0) {
     if (this.flashMs > 0) this.flashMs -= delta;
@@ -100,8 +110,9 @@ export class Player {
       const norm = axis !== 0 && depthAxis !== 0 ? Math.SQRT1_2 : 1;
       const dt = delta / 1000;
       const tiredMul = this.tired ? 0.75 : 1;
-      this.x += axis * CONFIG.player.moveSpeed * norm * tiredMul * dt;
-      this.z += depthAxis * CONFIG.player.depthSpeed * norm * tiredMul * dt;
+      const move = this.mods.move;
+      this.x += axis * CONFIG.player.moveSpeed * move * norm * tiredMul * dt;
+      this.z += depthAxis * CONFIG.player.depthSpeed * move * norm * tiredMul * dt;
       this.state = moving ? 'moving' : (this.tired ? 'tired' : 'idle');
       this.moveMs = moving ? this.moveMs + delta * (axis * this.facing < 0 ? -1 : 1) : 0;
     }
@@ -127,7 +138,7 @@ export class Player {
       const spec = CONFIG.punches[this.punchType];
       this.state = 'recovery';
       this.phaseMs = 0;
-      this.phaseDuration = this.scaled(spec.recovery);
+      this.phaseDuration = this.scaled(spec.recovery * this.mods.speed);
       return this.connectedThisPunch ? 'recovered-hit' : 'recovered-whiff';
     }
     if (this.state === 'recovery' || this.state === 'slipping' || this.state === 'ducking') {
@@ -157,6 +168,6 @@ export class Player {
   regen(delta, now) {
     if (this.busy) return;
     if (now - this.lastActionAt < CONFIG.stamina.regenDelay) return;
-    this.stamina = Math.min(CONFIG.stamina.max, this.stamina + CONFIG.stamina.regenPerSec * (delta / 1000));
+    this.stamina = Math.min(CONFIG.stamina.max, this.stamina + CONFIG.stamina.regenPerSec * this.mods.regen * (delta / 1000));
   }
 }

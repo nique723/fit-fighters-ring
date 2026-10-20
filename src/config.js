@@ -21,12 +21,21 @@ export const CONFIG = {
   },
 
   // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
-  // Pick on the page (FIGHTER button before the bell) or by URL: ?p=rising&o=o
+  // Pick on the page (FIGHTER button before the bell) or by URL: ?p=kamarian&o=o
+  // stats: 1-10 each, 5 = baseline. Totals must equal ratings.budget (console warns if not).
   roster: [
-    { id: 'p', name: 'CRIMSON GUARD' },
-    { id: 'o', name: 'WHITE LIGHTNING' },
-    { id: 'rising', name: 'RISING' }
+    { id: 'p', name: 'CRIMSON GUARD', trait: 'Balanced',
+      stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5 } },
+    { id: 'o', name: 'WHITE LIGHTNING', trait: 'Balanced',
+      stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5 } },
+    { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands, quick feet',
+      stats: { handSpeed: 9, footwork: 8, power: 3, reach: 3, chin: 3, engine: 4 } }
   ],
+  // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
+  ratings: {
+    budget: 30, min: 1, max: 10,
+    step: { handSpeed: 0.06, footwork: 0.06, power: 0.08, reach: 0.03, chin: 0.06, engine: 0.08, engineCost: 0.04 }
+  },
   defaultPlayer: 'p',
   defaultOpponent: 'o',
 

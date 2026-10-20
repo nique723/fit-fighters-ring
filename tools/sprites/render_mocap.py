@@ -1,6 +1,6 @@
 """Mixamo-rigged fighter (Meshy GLB) + Mixamo mocap FBX clips -> sprite frames.
 
-python3 render_mocap.py rising path/to/fighter.glb path/to/anim_dir out/rising [frame,frame,...]
+python3 render_mocap.py kamarian path/to/fighter.glb path/to/anim_dir out/kamarian [frame,frame,...]
 
 Clips are matched by file name (case-insensitive, any prefix): e.g. '...Jab_Cross.fbx'.
 Moves with no clip fall back to the IK poses in poses.py, scaled to the fighter's height.
@@ -19,7 +19,7 @@ from bpy_extras.object_utils import world_to_camera_view
 # comp: fraction of the clip's root (hip) drift cancelled so the sprite stays on its anchor.
 #   1.0 = fully in place. Punches keep some lunge so the shot still reaches.
 FIGHTERS = {
-    'rising': dict(
+    'kamarian': dict(
         glove=(0.62, 0.40, 0.03, 1),   # gold
         cuff=(0.03, 0.03, 0.035, 1),
         frames={

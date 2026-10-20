@@ -54,6 +54,16 @@
       #fight-toggle.stop { background: #e53e3e; color: #fff; box-shadow: 0 8px 0 #9b2c2c; }
       #sound-test { position: absolute; top: 8px; left: 10px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
       #fighter-pick { position: absolute; top: 8px; left: 96px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+      #fighter-card { position: absolute; left: 50%; bottom: 104px; transform: translateX(-50%); z-index: 45; width: 240px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18); background: rgba(8,10,14,.86); color: #edf2f7; font: 600 11px/1.2 system-ui, sans-serif; pointer-events: none; }
+      #fighter-card.hidden { display: none; }
+      #fighter-card .fc-name { font: 900 18px/1 Impact, system-ui, sans-serif; letter-spacing: .06em; color: #f6e05e; }
+      #fighter-card .fc-trait { margin: 3px 0 8px; color: #cbd5e0; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+      #fighter-card .fc-row { display: grid; grid-template-columns: 76px 1fr 18px; align-items: center; gap: 6px; margin: 3px 0; }
+      #fighter-card .fc-row i { height: 6px; border-radius: 3px; background: #2d3748; overflow: hidden; }
+      #fighter-card .fc-row b { display: block; height: 100%; background: #f6e05e; }
+      #fighter-card .fc-row em { font-style: normal; text-align: right; color: #fff; }
+      #fighter-card .fc-vs { margin-top: 7px; color: #a0aec0; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; }
+      @media (max-height: 500px) { #fighter-card { bottom: 96px; transform: translateX(-50%) scale(.85); transform-origin: bottom center; } }
       #sound-test.on { background: #276749; border-color: #68d391; }
       #full-toggle { position: absolute; top: 8px; right: 96px; z-index: 40; width: 32px; height: 32px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 16px/1 system-ui, sans-serif; }
       #camera-toggle { position: absolute; top: 8px; right: 10px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
@@ -81,6 +91,7 @@
         <button type="button" id="fight-toggle">Start</button>
         <button type="button" id="sound-test">Sound</button>
         <button type="button" id="fighter-pick">Fighter</button>
+        <div id="fighter-card"></div>
         <button type="button" id="full-toggle" aria-label="Full screen">⛶</button>
         <button type="button" id="camera-toggle">Camera</button>
         <div id="camera-cal">Hold your guard. Don't bounce.</div>

@@ -8,6 +8,7 @@ import { Combat } from './combat.js';
 import { UI } from './ui.js';
 import { createStats } from './stats.js';
 import { CameraMode } from './camera.js';
+import { fighter, RATING_KEYS, RATING_LABELS, checkRoster } from './ratings.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
@@ -42,7 +43,10 @@ class ArenaScene extends Phaser.Scene {
     };
     this.ui.setNames(fighterName(this.fighters.player), fighterName(this.fighters.opponent));
     const pick = document.getElementById('fighter-pick');
-    const showPick = () => { pick.textContent = 'Fighter: ' + fighterName(this.fighters.player); };
+    const showPick = () => {
+      pick.textContent = 'Fighter: ' + fighterName(this.fighters.player);
+      renderCard(this.fighters);
+    };
     showPick();
     pick.addEventListener('click', () => {
       if (this.stats.running) return;          // no swapping mid-fight
@@ -51,22 +55,15 @@ class ArenaScene extends Phaser.Scene {
       let opponent = this.fighters.opponent;
       if (opponent === player) opponent = ids.find((id) => id !== player);
       this.fighters = { player, opponent };
-      this.player.view.setFighter(player);
-      this.dummy.view.setFighter(opponent);
+      this.player.setFighter(player);
+      this.dummy.setFighter(opponent);
       this.ui.setNames(fighterName(player), fighterName(opponent));
       showPick();
     });
     const fight = document.getElementById('fight-toggle');
     fight.addEventListener('click', () => {
-      if (this.stats.running) {
-        this.combat.stop();
-        fight.textContent = 'Start';
-        fight.classList.remove('stop');
-      } else {
-        this.combat.start();
-        fight.textContent = 'Stop';
-        fight.classList.add('stop');
-      }
+      if (this.stats.running) this.combat.stop();
+      else this.combat.start();
     });
     document.getElementById('sound-test').addEventListener('pointerdown', (e) => { e.preventDefault(); unlock(); });
     document.addEventListener('pointerdown', unlock, { once: true });
@@ -139,8 +136,19 @@ class ArenaScene extends Phaser.Scene {
     if (power > 0.008) this.flashBulbs(0, 6);
     this.time.delayedCall(120, () => g.clear());
   }
+  /** Button + fighter card follow the fight state (a fight can end on its own after 3 rounds). */
+  syncFightUi() {
+    const live = !!this.stats.running;
+    if (live === this.wasLive) return;
+    this.wasLive = live;
+    const fight = document.getElementById('fight-toggle');
+    fight.textContent = live ? 'Stop' : 'Start';
+    fight.classList.toggle('stop', live);
+    document.getElementById('fighter-card').classList.toggle('hidden', live);
+  }
   update(_time, delta) {
     const dt = Math.min(delta, 32);
+    this.syncFightUi();
     this.nowMs += dt;
     if (this.inputBus.consumeDebugToggle()) this.ui.toggleDebug();
     this.combat.update(dt, this.inputBus);
@@ -148,6 +156,19 @@ class ArenaScene extends Phaser.Scene {
     this.directCamera(dt);
     this.ui.update(this.player, this.dummy, this.stats, this.combat.frozen);
   }
+}
+
+/** Pre-fight card: your fighter's trait and ratings, and who you're facing. */
+function renderCard({ player, opponent }) {
+  const el = document.getElementById('fighter-card');
+  if (!el) return;
+  const f = fighter(player);
+  const rows = RATING_KEYS.map((k) => {
+    const v = (f.stats || {})[k] ?? 5;
+    return `<div class="fc-row"><span>${RATING_LABELS[k]}</span><i><b style="width:${v * 10}%"></b></i><em>${v}</em></div>`;
+  }).join('');
+  el.innerHTML = `<div class="fc-name">${f.name}</div><div class="fc-trait">${f.trait || ''}</div>${rows}` +
+    `<div class="fc-vs">vs ${fighterName(opponent)}</div>`;
 }
 
 function fighterName(id) {
@@ -164,6 +185,8 @@ function pickFighters() {
   if (opponent === player) opponent = ids.find((id) => id !== player);
   return { player, opponent };
 }
+
+checkRoster();
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

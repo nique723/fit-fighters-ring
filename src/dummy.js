@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
+import { modsFor } from './ratings.js';
 
 export class Dummy {
   constructor(scene, x, z) {
@@ -30,8 +31,14 @@ export class Dummy {
     this.circleMs = 0;
     this.hookOnly = false;
     this.view = new FighterView(scene, (scene.fighters?.opponent ?? 'o') + '-');
+    this.setFighter(scene.fighters?.opponent ?? 'o');
     this.sparks = scene.add.graphics().setDepth(9);
     this.paint();
+  }
+  setFighter(id) {
+    this.fighterId = id;
+    this.mods = modsFor(id);
+    this.view.setFighter(id);
   }
   get telegraphing() { return this.state === 'startup'; }
   get punching() { return this.state === 'active'; }
@@ -94,7 +101,7 @@ export class Dummy {
     const hookW = w.hook || 0;
     let type = roll < w.jab ? 'jab' : roll < w.jab + w.cross ? 'cross' : roll < w.jab + w.cross + hookW ? 'hook' : 'body';
     // out of range for the shot he wanted: fall back to the jab
-    if (type !== 'jab' && gap > CONFIG.punches[type].reach) type = 'jab';
+    if (type !== 'jab' && gap > CONFIG.punches[type].reach * this.mods.reach) type = 'jab';
     this.punchType = type;
     return type;
   }
@@ -133,9 +140,9 @@ export class Dummy {
     const dt = delta / 1000;
     let moved = false;
     const dx = tx - this.x;
-    if (Math.abs(dx) > 10) { this.x += Math.sign(dx) * Math.min(Math.abs(dx), speedX * dt); moved = true; }
+    if (Math.abs(dx) > 10) { this.x += Math.sign(dx) * Math.min(Math.abs(dx), speedX * this.mods.move * dt); moved = true; }
     const dz = tz - this.z;
-    const zs = CONFIG.dummy.depthSpeed * (0.8 + this.level * 0.15);
+    const zs = CONFIG.dummy.depthSpeed * (0.8 + this.level * 0.15) * this.mods.move;
     if (Math.abs(dz) > 0.02) { this.z += Math.sign(dz) * Math.min(Math.abs(dz), zs * dt); moved = true; }
     if (moved) this.moveMs += delta * (Math.sign(dx) === this.facing ? 1 : -1);
     return moved;
@@ -171,9 +178,9 @@ export class Dummy {
         else this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
         this.state = 'startup';
         this.phaseMs = 0;
-        this.phaseDuration = Math.max(140, 320 - this.level * 30);
+        this.phaseDuration = Math.max(140, 320 - this.level * 30) * this.mods.speed;
         this.hitThisJab = false;
-        this.cooldown = Math.max(420, 900 - this.level * 140);
+        this.cooldown = Math.max(420, 900 - this.level * 140) * this.mods.speed;
         return 'telegraph';
       }
       return 'none';
@@ -189,7 +196,7 @@ export class Dummy {
     if (this.state === 'active') {
       this.state = 'recovery';
       this.phaseMs = 0;
-      this.phaseDuration = CONFIG.dummy.jabRecovery;
+      this.phaseDuration = CONFIG.dummy.jabRecovery * this.mods.speed;
       return this.hitThisJab ? 'jab-landed' : 'jab-whiff';
     }
     this.state = 'idle';
@@ -199,6 +206,6 @@ export class Dummy {
     const spec = CONFIG.punches[this.punchType || 'jab'];
     if (Math.abs(this.z - player.z) > (spec.lane || CONFIG.arena.laneTolerance)) return false;
     const gap = Math.abs(this.x - player.x);
-    return gap <= spec.reach + 10 && gap >= 80;
+    return gap <= spec.reach * this.mods.reach + 10 && gap >= 80;
   }
 }
