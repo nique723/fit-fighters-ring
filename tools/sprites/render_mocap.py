@@ -80,7 +80,8 @@ FIGHTERS = {
     'malachi': dict(height=1.88, glove_model='gloves/fight_glove.glb',
                     glove_colors={'main': (0.86, 0.86, 0.88), 'accent': (0.04, 0.16, 0.62), 'main_metal': 0.0, 'accent_metal': 1.0},
                     glove=(0.9, 0.9, 0.9, 1), cuff=(0.05, 0.1, 0.5, 1), moves={}),
-    # green body + gold thumb: black gloves would vanish against his black top with the guard up
+    # green body + gold thumb: black gloves would vanish against his black top with the guard up.
+    # Model: Meshy-rigged GLB (height ignored; rigged models keep their own size)
     'joe': dict(height=1.78, glove_model='gloves/fight_glove.glb',
                 glove_colors={'main': (0.04, 0.40, 0.17), 'accent': (0.85, 0.62, 0.16), 'main_metal': 0.0, 'accent_metal': 1.0},
                 glove=(0.05, 0.4, 0.17, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
