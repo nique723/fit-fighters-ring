@@ -65,13 +65,18 @@ export class FighterView {
 
 const FALLBACK = {
   hitlight: 'hithead', hitbig: 'hithead', hitrib: 'hitbody',
-  down: 'kneel', rise: 'kneel', victory: 'idle0'
+  down: 'kneel', rise: 'kneel', victory: 'idle0', block: 'idle0'
 };
 
 /** Hit reaction: impact, peak, recover across the hit pose. */
 export function hitFrame(seq, flashMs, total = CONFIG.feel.hitPoseMs) {
   const t = 1 - Math.max(0, flashMs) / total;
   return seq + Math.min(2, Math.floor(t * 3));
+}
+
+/** Shot caught on the gloves: gloves snap up, then the full shell. */
+export function blockFrame(ms) {
+  return 1 - Math.max(0, ms) / CONFIG.feel.blockPoseMs < 0.3 ? 'block0' : 'block1';
 }
 
 /** Arm up, then hold it with a little pump. */

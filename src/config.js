@@ -23,7 +23,7 @@ export const CONFIG = {
     mocapFrames: ['hitlight0', 'hitlight1', 'hitlight2', 'hithead0', 'hithead1', 'hithead2',
       'hitbig0', 'hitbig1', 'hitbig2', 'hitbody0', 'hitbody1', 'hitbody2', 'hitrib0', 'hitrib1', 'hitrib2',
       'down0', 'down1', 'down2', 'down3', 'rise0', 'rise1', 'rise2', 'rise3',
-      'victory0', 'victory1', 'victory2', 'victory3']
+      'victory0', 'victory1', 'victory2', 'victory3', 'block0', 'block1']
   },
 
   // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
@@ -52,7 +52,14 @@ export const CONFIG = {
       height: 1.80, canvas: [480, 576], anchor: [0.4, 0.9745],
       stats: { handSpeed: 2, footwork: 3, power: 8, reach: 4, chin: 3, engine: 4, guard: 9, experience: 7 },
       // as the opponent: walks you down behind the guard, sits in range for the cross and hook
-      ai: { punches: { jab: 0.6, cross: 1.5, hook: 1.6, body: 0.9 }, circle: 0.4, range: -25 } }
+      ai: { punches: { jab: 0.6, cross: 1.5, hook: 1.6, body: 0.9 }, circle: 0.4, range: -25 } },
+    // Heavyweight: longest arms and heaviest hands on the roster. The cost: slow feet and hands,
+    // a short gas tank. He wants you at the end of his jab; get inside and make him move.
+    { id: 'malachi', name: 'MALACHI', trait: 'Heavyweight · long reach · power', mocap: true,
+      height: 1.88, canvas: [480, 600], anchor: [0.4, 0.9753],
+      stats: { handSpeed: 3, footwork: 2, power: 9, reach: 9, chin: 6, engine: 3, guard: 4, experience: 4 },
+      // as the opponent: long jab and the right hand behind it, keeps you at range
+      ai: { punches: { jab: 1.5, cross: 1.4, hook: 0.7, body: 0.8 }, circle: 0.5, range: 20 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {
@@ -228,7 +235,8 @@ export const CONFIG = {
     dummyResetHold: 600,
     playerHitFlash: 80,
     hitPoseMs: 340,
-    knockdownMs: 2200,   // fall 0-20%, flat to 55%, getting up after
+    knockdownMs: 2200,
+    blockPoseMs: 260,    // shell-block pose when a shot lands on the gloves   // fall 0-20%, flat to 55%, getting up after
     hitSeq: { jab: 'hitlight', cross: 'hithead', hook: 'hithead', upper: 'hitbig', body: 'hitbody', rib: 'hitrib' }
   },
 

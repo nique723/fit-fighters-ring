@@ -32,8 +32,8 @@ MOVES = {
     'idle2': ('jab_cross', 57, 1.0), 'idle3': ('jab_cross', 59, 1.0),
     'walk0': ('medium_step_forward', 1, 1.0), 'walk1': ('medium_step_forward', 5, 1.0),
     'walk2': ('medium_step_forward', 8, 1.0), 'walk3': ('medium_step_forward', 25, 1.0),
-    'jab0': ('jab_cross', 9, 0.6), 'jab1': ('jab_cross', 12, 0.6),
-    'jab2': ('jab_cross', 15, 0.6), 'jab3': ('jab_cross', 17, 0.6),
+    'jab0': ('lead_jab', 7, 0.6), 'jab1': ('lead_jab', 10, 0.6),
+    'jab2': ('lead_jab', 13, 0.6), 'jab3': ('lead_jab', 16, 0.6),
     'cross0': ('jab_cross', 17, 0.6), 'cross1': ('jab_cross', 19, 0.6),
     'cross2': ('jab_cross', 21, 0.6), 'cross3': ('jab_cross', 23, 0.6),
     'hook0': ('hook', 19, 0.75), 'hook1': ('hook', 34, 0.75),
@@ -41,6 +41,11 @@ MOVES = {
     'body0': ('boxing_3', 11, 0.6), 'body1': ('boxing_3', 15, 0.6),
     'body2': ('boxing_3', 19, 0.6), 'body3': ('boxing_3', 23, 0.6),
     'slip': ('dodging', 17, 1.0), 'duck': ('dodging', 45, 1.0),
+    # lead uppercut: dip, rise, drive, top
+    'upper0': ('uppercut_jab', 16, 0.7), 'upper1': ('uppercut_jab', 22, 0.7),
+    'upper2': ('uppercut_jab', 24, 0.7), 'upper3': ('uppercut_jab', 26, 0.7),
+    # shell block: gloves come up, full cover
+    'block0': ('right_block', 10, 1.0), 'block1': ('right_block', 16, 1.0),
     # hit reactions: impact, peak, recover
     'hitlight0': ('light_hit_to_head', 5, 1.0), 'hitlight1': ('light_hit_to_head', 9, 1.0),
     'hitlight2': ('light_hit_to_head', 15, 1.0),
@@ -58,8 +63,8 @@ MOVES = {
     'victory0': ('victory', 19, 1.0), 'victory1': ('victory', 28, 1.0), 'victory2': ('victory', 46, 1.0),
     'victory3': ('victory', 64, 1.0),
 }
-# Game frames that still come from IK (no clip yet). upper2/3 reuse upper1 at export time.
-IK_ONLY = ['upper0', 'upper1']
+# Game frames that still come from IK (no clip yet). Empty: every move is mocap now.
+IK_ONLY = []
 
 # height: only needed for unrigged meshes (auto-rigged by automix.py); rigged GLBs keep their size.
 # glove_model: textured glove (gloves/*.glb, a RIGHT glove: cuff -Z, fist +Z, palm -Y, thumb +X).
@@ -71,6 +76,10 @@ FIGHTERS = {
     'kamarian': dict(glove_model='gloves/fight_glove.glb',
                      glove_colors={'main': (0.95, 0.68, 0.18), 'accent': (0.03, 0.03, 0.03), 'main_metal': 1.0, 'accent_metal': 0.0},
                      glove=(0.62, 0.40, 0.03, 1), cuff=(0.03, 0.03, 0.035, 1), moves={}),
+    # heavyweight: white body + metallic blue thumb (the third colourway)
+    'malachi': dict(height=1.88, glove_model='gloves/fight_glove.glb',
+                    glove_colors={'main': (0.86, 0.86, 0.88), 'accent': (0.04, 0.16, 0.62), 'main_metal': 0.0, 'accent_metal': 1.0},
+                    glove=(0.9, 0.9, 0.9, 1), cuff=(0.05, 0.1, 0.5, 1), moves={}),
     'lamar': dict(height=1.80, glove_model='gloves/fight_glove.glb',
                   glove_colors={'main': (0.50, 0.025, 0.035), 'accent': (0.03, 0.03, 0.03)},
                   glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
@@ -302,7 +311,7 @@ def add_model_gloves(arm, meshes, spec, H):
         gi = {g.index for g in ob.vertex_groups if 'Hand' in g.name}
         bm = bmesh.new(); bm.from_mesh(ob.data); dl = bm.verts.layers.deform.active
         if dl is None: bm.free(); continue
-        kill = [v for v in bm.verts if sum(w for g, w in v[dl].items() if g in gi) > 0.5]
+        kill = [v for v in bm.verts if sum(w for g, w in v[dl].items() if g in gi) > 0.2]
         bmesh.ops.delete(bm, geom=kill, context='VERTS'); bm.to_mesh(ob.data); bm.free(); ob.data.update()
         print('GLOVE removed hand verts:', len(kill))
 
@@ -369,7 +378,8 @@ def main():
         sc.render.filepath = f'{outdir}/{key}.png'; bpy.ops.render.render(write_still=True)
 
     def mocap(key, cname, fr, comp, fwd=0.0):
-        retarget_frame(arm, clip(cname), fr, comp, k_hip, fwd)
+        # floor-frame slide scales with height: a 6'2" body lying down is longer
+        retarget_frame(arm, clip(cname), fr, comp, k_hip, fwd * H / 1.68)
         floor_fix(meshes, arm)
         render(key)
 

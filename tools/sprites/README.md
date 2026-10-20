@@ -54,7 +54,7 @@ gold panels (`accent`), with optional `main_metal` / `accent_metal`. The bare ha
    `upper2`/`upper3`=`upper1` for the legacy frame names).
 4. Add `{ id, name, trait, mocap: true, stats }` to `CONFIG.roster`.
 
-Clips in use: jab_cross (idle, jab, cross), hook, boxing_3 (body), medium_step_forward (walk),
+Clips in use: lead_jab (jab), jab_cross (idle, cross), uppercut_jab (lead uppercut), right_block (shell block), hook, boxing_3 (body), medium_step_forward (walk),
 dodging (slip, duck), light_hit_to_head / medium_hit_to_head_2 / head_hit_2 (head reactions by punch),
 hit_to_body / big_rib_hit (body; rib = body counter), stunned_2 + getting_up (knockdown), victory.
-Baked but unused: boxing, step_backward, right_pivot, taunt, standing, receive_stomach_uppercut.
+Baked but unused: boxing, step_backward, right_pivot, left_pivot, taunt, standing, receive_stomach_uppercut.

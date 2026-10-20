@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame, blockFrame } from './fighter-view.js';
 import { modsFor, blocks } from './ratings.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
@@ -84,6 +84,7 @@ export class Player {
   tryBlock(kind) { return blocks(this.mods, kind, this.busy); }
   takeBlocked(kind, power = 1) {
     this.blockFlashMs = 120;
+    this.blockMs = CONFIG.feel.blockPoseMs;
     this.stamina = Math.max(0, this.stamina - (CONFIG.stamina.hitDrain[kind] || 0) * power * this.mods.drain * CONFIG.ratings.blockDamage);
     this.x -= this.facing * 4 * power;
   }
@@ -108,6 +109,7 @@ export class Player {
     this.x -= this.facing * 10 * power * this.mods.taken;
   }
   update(delta, axis, depthAxis = 0) {
+    if (this.blockMs > 0) this.blockMs -= delta;
     if (this.flashMs > 0) this.flashMs -= delta;
     if (this.state === 'slipping') {
       const t = Math.min(1, this.phaseMs / this.phaseDuration);
@@ -170,6 +172,7 @@ export class Player {
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
       return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
     }
+    if (this.blockMs > 0) return blockFrame(this.blockMs);
     if (this.flashMs > 0) return hitFrame(CONFIG.feel.hitSeq[this.hitKind] || 'hithead', this.flashMs, this.flashTotal);
     if (this.state === 'moving') return walkFrame(this.moveMs);
     if (this.celebrateAt != null) return victoryFrame(this.scene.nowMs - this.celebrateAt);

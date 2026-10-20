@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame, knockdownFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame, knockdownFrame, blockFrame } from './fighter-view.js';
 import { modsFor, blocks } from './ratings.js';
 
 export class Dummy {
@@ -47,6 +47,7 @@ export class Dummy {
   takeBlocked(knockback) {
     this.knockbackVel = knockback * 0.3;
     this.blockFlashMs = 140;
+    this.blockMs = CONFIG.feel.blockPoseMs;
   }
   get punching() { return this.state === 'active'; }
   get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }
@@ -129,6 +130,7 @@ export class Dummy {
   frameName() {
     if (this.downMs > 0) return knockdownFrame(CONFIG.feel.knockdownMs - this.downMs);
     if (this.flashMs > 0) return hitFrame(this.hitSeq || 'hithead', this.flashMs, this.flashTotal);
+    if (this.blockMs > 0) return blockFrame(this.blockMs);
     if (this.celebrateAt != null && this.state === 'idle' && !this.moving) return victoryFrame(this.scene.nowMs - this.celebrateAt);
     const shot = this.punchType || 'jab';
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
@@ -146,6 +148,7 @@ export class Dummy {
   }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;
+    if (this.blockMs > 0) this.blockMs -= delta;
     // stamina comes back between exchanges, faster with a bigger engine
     if (this.restMs > 0) this.restMs -= delta;
     else if (this.state === 'idle') {

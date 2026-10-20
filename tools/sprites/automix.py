@@ -198,25 +198,29 @@ def skin(ob, arm):
     print('AUTORIG unweighted after fill:', sum(1 for vv in ob.data.vertices if not any(e.weight > 0.01 for e in vv.groups)))
 
 
-def prune(ob, arm, far=0.18, ratio=2.5):
-    """Drop weights to bones that are far from a vertex (proxy transfer can tag a leg vertex with the
-    hand, which drags a strand of mesh across the body when posed). Keep a weight only if the bone
-    segment is within max(far m, ratio x the nearest weighted bone's distance)."""
+def prune(ob, arm, far=0.10, ratio=2.0):
+    """Drop weights to bones that are far from a vertex (proxy transfer can tag a stray island with
+    the wrong limb, e.g. part of a bandana with the forearm, which then flies off as a spike when
+    posed). A weight survives only if its bone segment is within max(far m, ratio x the distance to
+    the nearest bone of the whole skeleton). A vertex left with nothing goes to its nearest bone."""
     segs = {b.name: (b.head_local.copy(), b.tail_local.copy()) for b in arm.data.bones}
     names = {g.index: g.name for g in ob.vertex_groups}
-    dropped = 0
+
+    def dist(co, n):
+        h, t = segs[n]; p, fr = intersect_point_line(co, h, t); fr = max(0, min(1, fr))
+        return (co - (h + (t - h) * fr)).length
+    dropped = moved = 0
     for vv in ob.data.vertices:
-        ds = []
-        for e in vv.groups:
-            n = names[e.group]
-            if n not in segs or e.weight <= 0: continue
-            h, t = segs[n]; p, fr = intersect_point_line(vv.co, h, t); fr = max(0, min(1, fr))
-            ds.append((e.group, (vv.co - (h + (t - h) * fr)).length))
-        if len(ds) < 2: continue
-        near = min(d for _, d in ds)
-        bad = [g for g, d in ds if d > max(far, ratio * near)]
-        if not bad or len(bad) == len(ds): continue
+        if not vv.groups: continue
+        allb = {n: dist(vv.co, n) for n in segs}
+        nearest = min(allb, key=allb.get); lim = max(far, ratio * allb[nearest])
+        bad = [e.group for e in vv.groups if names.get(e.group) in allb and allb[names[e.group]] > lim]
+        if not bad: continue
         for g in bad: ob.vertex_groups[g].remove([vv.index]); dropped += 1
         tot = sum(e.weight for e in vv.groups)
-        for e in vv.groups: e.weight /= tot
-    print('AUTORIG pruned far weights:', dropped)
+        if tot <= 0.01:
+            g = ob.vertex_groups.get(nearest) or ob.vertex_groups.new(name=nearest)
+            g.add([vv.index], 1.0, 'REPLACE'); moved += 1
+        else:
+            for e in vv.groups: e.weight /= tot
+    print('AUTORIG pruned far weights:', dropped, '| reassigned to nearest bone:', moved)
