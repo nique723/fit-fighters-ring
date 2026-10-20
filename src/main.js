@@ -13,14 +13,16 @@ import { fighter, RATING_KEYS, RATING_LABELS, checkRoster } from './ratings.js';
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
   preload() {
-    for (const { id } of CONFIG.roster) {
-      for (const f of CONFIG.sprite.frames) this.load.image(id + '-' + f, 'fighters/' + id + '/' + f + '.webp');
+    for (const { id, mocap } of CONFIG.roster) {
+      const frames = mocap ? CONFIG.sprite.frames.concat(CONFIG.sprite.mocapFrames) : CONFIG.sprite.frames;
+      for (const f of frames) this.load.image(id + '-' + f, 'fighters/' + id + '/' + f + '.webp');
     }
     this.load.image('arena', 'arena/arena-96.webp');
   }
   create() {
     this.nowMs = 0;
     this.fighters = pickFighters();
+    window.__ring = this;   // test/debug hook: inspect fighters and fight state from the console
     this.cameras.main.setBackgroundColor(0x07090c);
     this.drawRing();
     this.player = new Player(this, CONFIG.player.startX, CONFIG.player.startZ);

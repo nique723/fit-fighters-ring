@@ -9,8 +9,8 @@ import { CONFIG } from './config.js';
  *   footwork   move speed, in/out speed               (player and AI)
  *   power      damage + knockback dealt               (player); push on the player when AI lands
  *   reach      punch reach                            (player and AI)
- *   chin       damage taken                           (AI health); push taken (player)
- *   engine     stamina regen + stamina cost per action (player)
+ *   chin       damage taken + stamina lost when hit   (player and AI)
+ *   engine     stamina regen (player and AI) + stamina cost per action (player)
  */
 export const RATING_KEYS = ['handSpeed', 'footwork', 'power', 'reach', 'chin', 'engine'];
 export const RATING_LABELS = {
@@ -31,6 +31,7 @@ export function modsFor(id) {
     power: 1 + step.power * r('power'),
     reach: 1 + step.reach * r('reach'),
     taken: 1 - step.chin * r('chin'),             // multiply damage taken by this
+    drain: 1 - step.chinDrain * r('chin'),        // multiply stamina lost when hit by this
     regen: 1 + step.engine * r('engine'),
     cost: 1 - step.engineCost * r('engine')
   };

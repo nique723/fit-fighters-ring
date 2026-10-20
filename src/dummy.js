@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame, knockdownFrame } from './fighter-view.js';
 import { modsFor } from './ratings.js';
 
 export class Dummy {
@@ -42,8 +42,12 @@ export class Dummy {
   }
   get telegraphing() { return this.state === 'startup'; }
   get punching() { return this.state === 'active'; }
-  flinch(kind, knockback) {
+  get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }
+  /** AI time multiplier: rating, then gassed. */
+  timeMul() { return this.mods.speed * (this.tired ? 1 + CONFIG.stamina.tiredSlowdown : 1); }
+  flinch(kind, knockback, counter = false) {
     this.knockbackVel = knockback;
+    this.hitSeq = CONFIG.feel.hitSeq[kind === 'body' && counter ? 'rib' : kind] || 'hithead';
     this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' || kind === 'hook' ? 0.12 : 0.05;
     this.flashMs = CONFIG.feel.hitPoseMs;
     this.hitKind = kind;
@@ -64,7 +68,7 @@ export class Dummy {
       g.fillCircle(cx + Math.cos(a) * (14 + i * 2) * s, cy + Math.sin(a) * 10 * s, (2 + (i % 2)) * s);
     }
   }
-  knockDown() { this.downMs = 2200; this.state = 'idle'; this.knockbackVel = 0; }
+  knockDown() { this.downMs = CONFIG.feel.knockdownMs; this.state = 'idle'; this.knockbackVel = 0; }
   nextStyle() {
     this.styleIndex = (this.styleIndex + 1) % CONFIG.styles.length;
     this.resetRing();
@@ -92,6 +96,7 @@ export class Dummy {
   takeHit(damage, staminaDrain = 0) {
     this.health = Math.max(0, this.health - damage);
     this.stamina = Math.max(0, this.stamina - staminaDrain);
+    this.restMs = CONFIG.stamina.regenDelay;
     return this.health <= 0;
   }
   get style() { return CONFIG.styles[this.styleIndex % CONFIG.styles.length]; }
@@ -106,8 +111,9 @@ export class Dummy {
     return type;
   }
   frameName() {
-    if (this.downMs > 0) return 'kneel';
-    if (this.flashMs > 0) return this.hitKind === 'body' ? 'hitbody' : 'hithead';
+    if (this.downMs > 0) return knockdownFrame(CONFIG.feel.knockdownMs - this.downMs);
+    if (this.flashMs > 0) return hitFrame(this.hitSeq || 'hithead', this.flashMs);
+    if (this.celebrateAt != null && this.state === 'idle' && !this.moving) return victoryFrame(this.scene.nowMs - this.celebrateAt);
     const shot = this.punchType || 'jab';
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
       return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
@@ -123,6 +129,11 @@ export class Dummy {
   }
   update(delta) {
     if (this.resetMs > 0) this.resetMs -= delta;
+    // stamina comes back between exchanges, faster with a bigger engine
+    if (this.restMs > 0) this.restMs -= delta;
+    else if (this.state === 'idle') {
+      this.stamina = Math.min(CONFIG.stamina.max, this.stamina + CONFIG.stamina.regenPerSec * this.mods.regen * (delta / 1000));
+    }
     if (this.downMs > 0) this.downMs -= delta;
     if (this.flashMs > 0) this.flashMs -= delta;
     else this.sparks.clear();
@@ -178,9 +189,9 @@ export class Dummy {
         else this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
         this.state = 'startup';
         this.phaseMs = 0;
-        this.phaseDuration = Math.max(140, 320 - this.level * 30) * this.mods.speed;
+        this.phaseDuration = Math.max(140, 320 - this.level * 30) * this.timeMul();
         this.hitThisJab = false;
-        this.cooldown = Math.max(420, 900 - this.level * 140) * this.mods.speed;
+        this.cooldown = Math.max(420, 900 - this.level * 140) * this.timeMul();
         return 'telegraph';
       }
       return 'none';
@@ -196,7 +207,7 @@ export class Dummy {
     if (this.state === 'active') {
       this.state = 'recovery';
       this.phaseMs = 0;
-      this.phaseDuration = CONFIG.dummy.jabRecovery * this.mods.speed;
+      this.phaseDuration = CONFIG.dummy.jabRecovery * this.timeMul();
       return this.hitThisJab ? 'jab-landed' : 'jab-whiff';
     }
     this.state = 'idle';

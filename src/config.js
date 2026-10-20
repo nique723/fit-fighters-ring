@@ -17,7 +17,13 @@ export const CONFIG = {
     frames: ['idle0', 'idle1', 'idle2', 'idle3', 'walk0', 'walk1', 'walk2', 'walk3',
       'jab0', 'jab1', 'jab2', 'jab3', 'cross0', 'cross1', 'cross2', 'cross3',
       'body0', 'body1', 'body2', 'body3', 'upper0', 'upper1', 'upper2', 'upper3',
-      'hook0', 'hook1', 'hook2', 'hook3', 'slip', 'duck', 'hithead', 'hitbody', 'kneel']
+      'hook0', 'hook1', 'hook2', 'hook3', 'slip', 'duck', 'hithead', 'hitbody', 'kneel'],
+    // Extra frames rendered from mocap (tools/sprites/render_mocap.py). Only fighters with
+    // `mocap: true` load these; everyone else falls back (fighter-view.js FALLBACK).
+    mocapFrames: ['hitlight0', 'hitlight1', 'hitlight2', 'hithead0', 'hithead1', 'hithead2',
+      'hitbig0', 'hitbig1', 'hitbig2', 'hitbody0', 'hitbody1', 'hitbody2', 'hitrib0', 'hitrib1', 'hitrib2',
+      'down0', 'down1', 'down2', 'down3', 'rise0', 'rise1', 'rise2', 'rise3',
+      'victory0', 'victory1', 'victory2', 'victory3']
   },
 
   // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
@@ -28,13 +34,17 @@ export const CONFIG = {
       stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5 } },
     { id: 'o', name: 'WHITE LIGHTNING', trait: 'Balanced',
       stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5 } },
-    { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands, quick feet',
-      stats: { handSpeed: 9, footwork: 8, power: 3, reach: 3, chin: 3, engine: 4 } }
+    // Small, fast, deep gas tank. The cost: light shots, short reach, and every punch he
+    // eats drains his stamina hard (chin 2), so getting hit is how you beat him.
+    { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands · quick feet · big engine', mocap: true,
+      stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {
     budget: 30, min: 1, max: 10,
-    step: { handSpeed: 0.06, footwork: 0.06, power: 0.08, reach: 0.03, chin: 0.06, engine: 0.08, engineCost: 0.04 }
+    // chinDrain: stamina lost when hit. chin 2 = 36% more drained per punch taken.
+    step: { handSpeed: 0.06, footwork: 0.06, power: 0.08, reach: 0.03, chin: 0.06, chinDrain: 0.12,
+      engine: 0.08, engineCost: 0.04 }
   },
   defaultPlayer: 'p',
   defaultOpponent: 'o',
@@ -102,6 +112,8 @@ export const CONFIG = {
     regenDelay: 600,
     tiredThreshold: 20,
     tiredSlowdown: 0.4,
+    // stamina lost when a punch lands on you (x attacker power x your chin)
+    hitDrain: { jab: 3, cross: 7, hook: 7, body: 9, upper: 7 },
     comboLink: 0.4
   },
 
@@ -194,7 +206,9 @@ export const CONFIG = {
     counterPopupMs: 700,
     dummyResetHold: 600,
     playerHitFlash: 80,
-    hitPoseMs: 340
+    hitPoseMs: 340,
+    knockdownMs: 2200,   // fall 0-20%, flat to 55%, getting up after
+    hitSeq: { jab: 'hitlight', cross: 'hithead', hook: 'hithead', upper: 'hitbig', body: 'hitbody', rib: 'hitrib' }
   },
 
   score: {

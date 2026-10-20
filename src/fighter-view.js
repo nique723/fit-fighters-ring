@@ -18,13 +18,25 @@ export class FighterView {
 
   setFighter(id) {
     this.prefix = id + '-';
-    this.sprite.setTexture(this.prefix + this.frame);
+    this.sprite.setTexture(this.resolve(this.frame));
   }
 
   setFrame(name) {
     if (name === this.frame) return;
     this.frame = name;
-    this.sprite.setTexture(this.prefix + name);
+    this.sprite.setTexture(this.resolve(name));
+  }
+
+  /** Newest frame this fighter has: 'hitbig2' -> 'hitbig2' | 'hithead' | ... */
+  resolve(name) {
+    const tex = this.scene.textures;
+    let n = name;
+    for (let i = 0; i < 4 && n; i++) {
+      if (tex.exists(this.prefix + n)) return this.prefix + n;
+      const base = n.replace(/\d+$/, '');
+      n = tex.exists(this.prefix + base) ? base : FALLBACK[base] || FALLBACK[n];
+    }
+    return this.prefix + 'idle0';
   }
 
   place(x, z, facing, offsetY = 0) {
@@ -46,6 +58,31 @@ export class FighterView {
   }
 
   tint(color) { this.sprite.setTint(color); }
+}
+
+const FALLBACK = {
+  hitlight: 'hithead', hitbig: 'hithead', hitrib: 'hitbody',
+  down: 'kneel', rise: 'kneel', victory: 'idle0'
+};
+
+/** Hit reaction: impact, peak, recover across the hit pose. */
+export function hitFrame(seq, flashMs) {
+  const t = 1 - Math.max(0, flashMs) / CONFIG.feel.hitPoseMs;
+  return seq + Math.min(2, Math.floor(t * 3));
+}
+
+/** Arm up, then hold it with a little pump. */
+export function victoryFrame(ms) {
+  if (ms < 160) return 'victory0';
+  return 'victory' + [1, 2, 3, 2][Math.floor((ms - 160) / 220) % 4];
+}
+
+/** Knockdown: fall, lie there, get up. */
+export function knockdownFrame(elapsed) {
+  const t = elapsed / CONFIG.feel.knockdownMs;
+  if (t < 0.2) return 'down' + Math.min(2, Math.floor(t / 0.2 * 3));
+  if (t < 0.55) return 'down3';
+  return 'rise' + Math.min(3, Math.floor((t - 0.55) / 0.45 * 4));
 }
 
 /** Ping-pong idle cycle so breathing doesn't pop. */

@@ -17,14 +17,34 @@ RW=1440 SAMPLES=24 HAZE=0.016 FSTOP=1.2 OUT=arena.png python3 arena.py
 - `arena.py` — prints the floor projection table. If the camera changes, paste it into `src/stage.js` (PROJ).
 - Sprites are rendered at 8° camera pitch to match the arena camera.
 
-## Mocap fighters (`render_mocap.py`)
+## Mocap fighters (`render_mocap.py` + move library)
 
-For Meshy models that come **already rigged** (Mixamo bone names) plus Mixamo FBX clips.
+For Meshy models that come **already rigged** (Mixamo bone names). All fighters share one move library.
 
-- Each sprite frame is one clip frame: `FIGHTERS[<id>]['frames']` maps `jab2 -> ('jab_cross', 15, 0.6)` = clip, frame (30 fps), root-drift cancel (1 = in place).
-- Clips are found by file name in the anim folder (`Jab_Cross.fbx` -> `jab_cross`).
-- Any game frame without a clip falls back to the IK poses in `poses.py`, scaled to the fighter's height.
-- Gloves are added (`glove` colour in the spec). Fists come from the mocap.
-- Convert PNG -> WebP (q82) into `public/fighters/<id>/` and add `{ id, name }` to `CONFIG.roster`.
+**Move library** — `clips/*.npz`, baked from Mixamo FBX (3.3 MB for 19 clips instead of ~35 MB of FBX):
 
-Kamarian (`kamarian`): Jab_Cross (idle, jab, cross), Boxing (hook), Boxing_3 (body), Medium_Step_Forward (walk). Uppercut, slip, duck, hit reactions and knockdown are still IK.
+```bash
+python3 bake_clips.py path/to/new_mixamo_fbx/     # adds/updates clips/<name>.npz
+```
+
+**`MOVES`** in `render_mocap.py` maps every game frame to `(clip, clip frame @30fps, comp[, forward m])`:
+`comp` = how much forward hip drift is cancelled (1 = in place). Every fighter uses `MOVES`; a fighter can
+override entries in `FIGHTERS[<id>]['moves']`. Game frames with no clip yet (`IK_ONLY`: uppercut) use the IK poses.
+
+**Pick frames by eye**, not by guessing:
+
+```bash
+python3 render_mocap.py kamarian fighter.glb out/probe --probe hook 13,19,25,31,37
+```
+
+**New fighter = 4 steps**
+1. Add `FIGHTERS['<id>'] = dict(glove=..., cuff=..., moves={})`.
+2. `python3 render_mocap.py <id> path/to/model.glb out/<id>` (~3 min, 2 cores).
+3. PNG -> WebP q82 into `public/fighters/<id>/` (also write `hithead`=`hithead1`, `hitbody`=`hitbody1`,
+   `upper2`/`upper3`=`upper1` for the legacy frame names).
+4. Add `{ id, name, trait, mocap: true, stats }` to `CONFIG.roster`.
+
+Clips in use: jab_cross (idle, jab, cross), hook, boxing_3 (body), medium_step_forward (walk),
+dodging (slip, duck), light_hit_to_head / medium_hit_to_head_2 / head_hit_2 (head reactions by punch),
+hit_to_body / big_rib_hit (body; rib = body counter), stunned_2 + getting_up (knockdown), victory.
+Baked but unused: boxing, step_backward, right_pivot, taunt, standing, receive_stomach_uppercut.

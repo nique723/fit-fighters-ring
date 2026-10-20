@@ -113,10 +113,13 @@ export class UI {
       'Landed ' + landed + '/' + thrown + '   Counters ' + stats.countersLanded,
       'Next: ' + next
     ].join('\n')).setAlpha(1);
-    this.scene.time.delayedCall(2200, () => {
+    // hold until the knocked-down fighter is back on his feet (game time can run slower than real time)
+    const finish = () => {
+      if (this.scene.dummy && this.scene.dummy.downMs > 0) { this.scene.time.delayedCall(100, finish); return; }
       this.grade.setAlpha(0);
       done();
-    });
+    };
+    this.scene.time.delayedCall(CONFIG.feel.knockdownMs, finish);
   }
 
   toggleDebug() {

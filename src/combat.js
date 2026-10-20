@@ -74,10 +74,11 @@ export class Combat {
     const mul = counter ? CONFIG.slip.counterDamageMul : 1;
     // attacker power x defender chin; one decimal so the popup matches health removed
     const damage = Math.round(spec.damage * mul * this.player.mods.power * this.dummy.mods.taken * 10) / 10;
-    const drain = type === 'body' ? spec.staminaDrain : 0;
+    const drain = ((type === 'body' ? spec.staminaDrain : 0) + (CONFIG.stamina.hitDrain[type] || 0))
+      * this.player.mods.power * this.dummy.mods.drain;
     const dead = this.dummy.takeHit(damage, drain);
 
-    this.dummy.flinch(type, spec.knockback * this.player.mods.power);
+    this.dummy.flinch(type, spec.knockback * this.player.mods.power, counter);
     this.hitstop(spec.hitstop);
     this.shake(spec.shake);
     const hp = project((this.player.x + this.dummy.x) / 2, this.dummy.z, type === 'body' ? 1.05 : 1.5);
@@ -167,6 +168,8 @@ export class Combat {
     this.dummy.level = 2;
     this.dummy.resetRing();
     this.ui.grade.setAlpha(0);
+    this.player.celebrateAt = null;
+    this.dummy.celebrateAt = null;
   }
 
   stop() {
@@ -185,6 +188,9 @@ export class Combat {
       this.stats.finished = true;
       const n = this.shots();
       this.ui.showResult('3 ROUNDS', n.you, n.him);
+      // winner raises a glove
+      if (n.you > n.him) this.player.celebrateAt = this.scene.nowMs;
+      else if (n.him > n.you) this.dummy.celebrateAt = this.scene.nowMs;
       return;
     }
     this.stats.round += 1;

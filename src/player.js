@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame } from './fighter-view.js';
 import { modsFor } from './ratings.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
@@ -48,6 +48,7 @@ export class Player {
     const cost = spec.staminaCost * this.mods.cost;
     if (!(this.canAct() || this.canLink()) || this.stamina < cost) return false;
     this.spendStamina(cost);
+    this.celebrateAt = null;
     this.punchType = type;
     this.weightX = type === 'cross' ? 18 : type === 'upper' ? 14 : type === 'body' ? 10 : 6;
     this.hitThisPunch = false;
@@ -92,6 +93,10 @@ export class Player {
   takeDummyHit(kind, power = 1) {
     this.flashMs = CONFIG.feel.hitPoseMs;
     this.hitKind = kind;
+    // small fighters feel it in the gas tank
+    const drain = (CONFIG.stamina.hitDrain[kind] || 0) * power * this.mods.drain;
+    this.stamina = Math.max(0, this.stamina - drain);
+    this.lastActionAt = this.scene.nowMs;
     this.x -= this.facing * 10 * power * this.mods.taken;
   }
   update(delta, axis, depthAxis = 0) {
@@ -115,6 +120,7 @@ export class Player {
       this.z += depthAxis * CONFIG.player.depthSpeed * move * norm * tiredMul * dt;
       this.state = moving ? 'moving' : (this.tired ? 'tired' : 'idle');
       this.moveMs = moving ? this.moveMs + delta * (axis * this.facing < 0 ? -1 : 1) : 0;
+      if (moving) this.celebrateAt = null;
     }
     this.clamp();
     this.paint();
@@ -156,8 +162,9 @@ export class Player {
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
       return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
     }
-    if (this.flashMs > 0) return this.hitKind === 'body' ? 'hitbody' : 'hithead';
+    if (this.flashMs > 0) return hitFrame(CONFIG.feel.hitSeq[this.hitKind] || 'hithead', this.flashMs);
     if (this.state === 'moving') return walkFrame(this.moveMs);
+    if (this.celebrateAt != null) return victoryFrame(this.scene.nowMs - this.celebrateAt);
     return idleFrame(this.scene.nowMs);
   }
   paint() {
