@@ -19,7 +19,7 @@ elbow/knee bend is what the IK fallback needs to solve), so the Mixamo T-pose re
 import bpy, sys, os, math, json
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pose, scene_util, poses
+import pose, scene_util, poses, automix
 from mathutils import Vector, Matrix
 from bpy_extras.object_utils import world_to_camera_view
 
@@ -61,8 +61,10 @@ MOVES = {
 # Game frames that still come from IK (no clip yet). upper2/3 reuse upper1 at export time.
 IK_ONLY = ['upper0', 'upper1']
 
+# height: only needed for unrigged meshes (auto-rigged by automix.py); rigged GLBs keep their size.
 FIGHTERS = {
     'kamarian': dict(glove=(0.62, 0.40, 0.03, 1), cuff=(0.03, 0.03, 0.035, 1), moves={}),
+    'lamar': dict(height=1.80, glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
 }
 
 M = 'mixamorig:'
@@ -147,8 +149,13 @@ def set_world_rot(arm, name, R3, loc=None):
     bpy.context.view_layer.update()
 
 
-def load_target(glb):
+def load_target(glb, height=None, name='fighter'):
     bpy.ops.import_scene.gltf(filepath=glb)
+    if not [o for o in bpy.data.objects if o.type == 'ARMATURE']:
+        if not height: raise SystemExit('unrigged mesh: set height in FIGHTERS')
+        ob = max((o for o in bpy.data.objects if o.type == 'MESH'), key=lambda o: len(o.data.vertices))
+        automix.fit_height(ob, height)
+        automix.build(ob, height, name)
     arm = [o for o in bpy.data.objects if o.type == 'ARMATURE'][0]
     meshes = [o for o in bpy.data.objects if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers)]
     for o in bpy.data.objects:
@@ -205,7 +212,9 @@ def add_gloves(arm, color, cuff, k):
     mc.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 0.5
     for s in ('Left', 'Right'):
         hb = arm.data.bones[M + s + 'Hand']; L = hb.length
-        th = hb.matrix_local.inverted() @ arm.data.bones[M + s + 'HandThumb1'].head_local
+        tb = arm.data.bones.get(M + s + 'HandThumb1')
+        # thumb side: the thumb bone if rigged, else forward (-Y) in an A-pose
+        th = (hb.matrix_local.inverted() @ tb.head_local) if tb else (hb.matrix_local.inverted().to_3x3() @ Vector((0, -1, 0)))
         tx = 1 if th.x > 0 else -1; tz = 1 if th.z > 0 else -1
         parts = []
         bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=1)
@@ -260,7 +269,7 @@ def main():
     moves = dict(MOVES); moves.update(spec.get('moves', {}))
     os.makedirs(outdir, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    arm, meshes = load_target(glb)
+    arm, meshes = load_target(glb, spec.get('height'), name)
     vz = [(ob.matrix_world @ v.co).z for ob in meshes for v in ob.data.vertices]
     H = max(vz) - min(vz)
     ref = clip('jab_cross')
@@ -270,8 +279,11 @@ def main():
     meshes = mats_meshes()
 
     scene_util.light_rig()
-    RW, RH = 480, 504
-    cam = scene_util.sprite_camera(8, 2.0, RW, RH, 0.2, 1.0)
+    # 240 px/m like every fighter. Canvas grows with height so a raised glove (victory) fits:
+    # 1.68 m -> the standard 480x504; taller fighters get a taller canvas and their own anchor.
+    RW = 480
+    RH = max(504, int(math.ceil((1.27 * H + 0.1) * 240 / 8) * 8))
+    cam = scene_util.sprite_camera(8, 2.0, RW, RH, 0.2, RH / 240 / 2 - 0.05)
     sc = bpy.context.scene; sc.render.engine = 'CYCLES'
     sc.cycles.samples = int(os.environ.get('SAMPLES', '32')); sc.render.film_transparent = True
     sc.cycles.use_denoising = True

@@ -11,10 +11,13 @@ import { CONFIG } from './config.js';
  *   reach      punch reach                            (player and AI)
  *   chin       damage taken + stamina lost when hit   (player and AI)
  *   engine     stamina regen (player and AI) + stamina cost per action (player)
+ *   guard      blocks head shots while not punching   (player and AI); body + uppercut go through
+ *   experience counter window (player), hit stun (both), wind-up tell (AI)
  */
-export const RATING_KEYS = ['handSpeed', 'footwork', 'power', 'reach', 'chin', 'engine'];
+export const RATING_KEYS = ['handSpeed', 'footwork', 'power', 'reach', 'chin', 'engine', 'guard', 'experience'];
 export const RATING_LABELS = {
-  handSpeed: 'Hand speed', footwork: 'Footwork', power: 'Power', reach: 'Reach', chin: 'Chin', engine: 'Engine'
+  handSpeed: 'Hand speed', footwork: 'Footwork', power: 'Power', reach: 'Reach', chin: 'Chin', engine: 'Engine',
+  guard: 'Guard', experience: 'Experience'
 };
 
 export function fighter(id) {
@@ -33,8 +36,19 @@ export function modsFor(id) {
     taken: 1 - step.chin * r('chin'),             // multiply damage taken by this
     drain: 1 - step.chinDrain * r('chin'),        // multiply stamina lost when hit by this
     regen: 1 + step.engine * r('engine'),
-    cost: 1 - step.engineCost * r('engine')
+    cost: 1 - step.engineCost * r('engine'),
+    block: Math.max(0, step.guard * r('guard')),              // chance a head shot is blocked
+    headTaken: 1 + step.guardOpen * Math.max(0, -r('guard')), // low guard: head shots hurt more
+    counter: 1 + step.experience * r('experience'),           // counter window
+    stun: 1 - step.expStun * r('experience'),                 // hit pose length
+    tell: 1 - step.expTell * r('experience')                  // AI wind-up length
   };
+}
+
+/** Does this head shot get blocked? Only while the defender isn't punching. */
+export function blocks(mods, kind, defenderBusy) {
+  if (defenderBusy || CONFIG.ratings.unblockable.includes(kind)) return false;
+  return Math.random() < mods.block;
 }
 
 /** Warn in the console if a fighter's ratings break the rules, so balance stays honest. */

@@ -18,6 +18,8 @@ export class FighterView {
 
   setFighter(id) {
     this.prefix = id + '-';
+    const f = CONFIG.roster.find((r) => r.id === id);
+    this.anchor = (f && f.anchor) || [CONFIG.sprite.anchorX, CONFIG.sprite.anchorY];
     this.sprite.setTexture(this.resolve(this.frame));
   }
 
@@ -44,7 +46,8 @@ export class FighterView {
     const s = p.ppm / CONFIG.sprite.pxPerM;
     this.facing = facing;
     this.sprite.setFlipX(facing < 0);
-    this.sprite.setOrigin(facing < 0 ? 1 - CONFIG.sprite.anchorX : CONFIG.sprite.anchorX, CONFIG.sprite.anchorY);
+    const [ax, ay] = this.anchor || [CONFIG.sprite.anchorX, CONFIG.sprite.anchorY];
+    this.sprite.setOrigin(facing < 0 ? 1 - ax : ax, ay);
     this.sprite.setScale(s);
     this.sprite.setPosition(p.x, p.y + offsetY * s);
     this.sprite.rotation = this.lean * facing;
@@ -66,8 +69,8 @@ const FALLBACK = {
 };
 
 /** Hit reaction: impact, peak, recover across the hit pose. */
-export function hitFrame(seq, flashMs) {
-  const t = 1 - Math.max(0, flashMs) / CONFIG.feel.hitPoseMs;
+export function hitFrame(seq, flashMs, total = CONFIG.feel.hitPoseMs) {
+  const t = 1 - Math.max(0, flashMs) / total;
   return seq + Math.min(2, Math.floor(t * 3));
 }
 

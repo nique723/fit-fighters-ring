@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame, knockdownFrame } from './fighter-view.js';
-import { modsFor } from './ratings.js';
+import { modsFor, blocks } from './ratings.js';
 
 export class Dummy {
   constructor(scene, x, z) {
@@ -41,6 +41,12 @@ export class Dummy {
     this.view.setFighter(id);
   }
   get telegraphing() { return this.state === 'startup'; }
+  /** High guard: only while he's not throwing and not down. */
+  tryBlock(kind) { return blocks(this.mods, kind, this.state !== 'idle' || this.downMs > 0); }
+  takeBlocked(knockback) {
+    this.knockbackVel = knockback * 0.3;
+    this.blockFlashMs = 140;
+  }
   get punching() { return this.state === 'active'; }
   get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }
   /** AI time multiplier: rating, then gassed. */
@@ -49,7 +55,8 @@ export class Dummy {
     this.knockbackVel = knockback;
     this.hitSeq = CONFIG.feel.hitSeq[kind === 'body' && counter ? 'rib' : kind] || 'hithead';
     this.bend = kind === 'body' ? CONFIG.punches.body.bend : kind === 'cross' || kind === 'hook' ? 0.12 : 0.05;
-    this.flashMs = CONFIG.feel.hitPoseMs;
+    this.flashTotal = CONFIG.feel.hitPoseMs * this.mods.stun;
+    this.flashMs = this.flashTotal;
     this.hitKind = kind;
     this.burst(kind);
     if (this.state !== 'idle') { this.state = 'idle'; this.phaseMs = 0; }
@@ -112,7 +119,7 @@ export class Dummy {
   }
   frameName() {
     if (this.downMs > 0) return knockdownFrame(CONFIG.feel.knockdownMs - this.downMs);
-    if (this.flashMs > 0) return hitFrame(this.hitSeq || 'hithead', this.flashMs);
+    if (this.flashMs > 0) return hitFrame(this.hitSeq || 'hithead', this.flashMs, this.flashTotal);
     if (this.celebrateAt != null && this.state === 'idle' && !this.moving) return victoryFrame(this.scene.nowMs - this.celebrateAt);
     const shot = this.punchType || 'jab';
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
@@ -123,7 +130,8 @@ export class Dummy {
   }
   paint() {
     this.view.setFrame(this.frameName());
-    this.view.tint(this.state === 'startup' ? 0xffe0b0 : 0xffffff);
+    if (this.blockFlashMs > 0) this.blockFlashMs -= 16;
+    this.view.tint(this.blockFlashMs > 0 ? 0xbfe3ff : this.state === 'startup' ? 0xffe0b0 : 0xffffff);
     this.view.lean = this.flashMs > 0 ? this.bend * 0.25 : this.bend * 0.5;
     this.view.place(this.x, this.z, this.facing);
   }
@@ -189,7 +197,7 @@ export class Dummy {
         else this.pickPunch(player ? Math.abs(this.x - player.x) : 200);
         this.state = 'startup';
         this.phaseMs = 0;
-        this.phaseDuration = Math.max(140, 320 - this.level * 30) * this.timeMul();
+        this.phaseDuration = Math.max(140, 320 - this.level * 30) * this.timeMul() * this.mods.tell;
         this.hitThisJab = false;
         this.cooldown = Math.max(420, 900 - this.level * 140) * this.timeMul();
         return 'telegraph';

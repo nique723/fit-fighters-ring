@@ -37,6 +37,11 @@ override entries in `FIGHTERS[<id>]['moves']`. Game frames with no clip yet (`IK
 python3 render_mocap.py kamarian fighter.glb out/probe --probe hook 13,19,25,31,37
 ```
 
+**Unrigged Meshy model?** Set `height` (m) in `FIGHTERS[<id>]`; `automix.py` measures the joints from the
+mesh, builds a Mixamo-named skeleton and skins it, then everything below works the same. Fighters taller than
+~1.7 m render on a taller canvas so a raised glove fits; copy `anchorX/anchorY` from `anchor.json` into the
+roster entry as `anchor: [x, y]`.
+
 **New fighter = 4 steps**
 1. Add `FIGHTERS['<id>'] = dict(glove=..., cuff=..., moves={})`.
 2. `python3 render_mocap.py <id> path/to/model.glb out/<id>` (~3 min, 2 cores).

@@ -28,23 +28,36 @@ export const CONFIG = {
 
   // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
   // Pick on the page (FIGHTER button before the bell) or by URL: ?p=kamarian&o=o
-  // stats: 1-10 each, 5 = baseline. Totals must equal ratings.budget (console warns if not).
+  // stats: 8 ratings, 1-10 each, 5 = baseline. Totals must equal ratings.budget (console warns if not).
+  // anchor: only for sprites rendered on a taller canvas (fighters over ~1.7 m); see anchor.json.
   roster: [
     { id: 'p', name: 'CRIMSON GUARD', trait: 'Balanced',
-      stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5 } },
+      stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5, guard: 5, experience: 5 } },
     { id: 'o', name: 'WHITE LIGHTNING', trait: 'Balanced',
-      stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5 } },
+      stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5, guard: 5, experience: 5 } },
     // Small, fast, deep gas tank. The cost: light shots, short reach, and every punch he
     // eats drains his stamina hard (chin 2), so getting hit is how you beat him.
     { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands · quick feet · big engine', mocap: true,
-      stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8 } }
+      stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8, guard: 5, experience: 5 } },
+    // Guard never comes down (40% of head shots blocked), heavy hands, ring IQ. The cost: slow
+    // feet, slow hands, short gas tank. Beat him with movement, body shots and uppercuts
+    // (both go through the guard), and by making him work.
+    { id: 'lamar', name: 'LAMAR', trait: 'Guard always up · power · experience', mocap: true,
+      anchor: [0.4, 0.9745],
+      stats: { handSpeed: 2, footwork: 3, power: 8, reach: 4, chin: 3, engine: 4, guard: 9, experience: 7 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {
-    budget: 30, min: 1, max: 10,
+    budget: 40, min: 1, max: 10,
     // chinDrain: stamina lost when hit. chin 2 = 36% more drained per punch taken.
     step: { handSpeed: 0.06, footwork: 0.06, power: 0.08, reach: 0.03, chin: 0.06, chinDrain: 0.12,
-      engine: 0.08, engineCost: 0.04 }
+      engine: 0.08, engineCost: 0.04,
+      // guard: block chance on head shots per point above 5 (9 = 40%); below 5, head shots hurt more.
+      guard: 0.1, guardOpen: 0.05,
+      // experience: longer counter window, shakes off hits faster, (AI) gives away less on the wind-up
+      experience: 0.1, expStun: 0.06, expTell: 0.04 },
+    blockDamage: 0.25,              // a blocked shot still does a quarter
+    unblockable: ['body', 'upper']  // these go around / through a high guard
   },
   defaultPlayer: 'p',
   defaultOpponent: 'o',

@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame } from './fighter-view.js';
-import { modsFor } from './ratings.js';
+import { modsFor, blocks } from './ratings.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
 
@@ -79,7 +79,14 @@ export class Player {
     return true;
   }
   isSlipping() { return this.state === 'slipping'; }
-  openCounter(now) { this.counterUntil = now + CONFIG.slip.counterWindow; }
+  openCounter(now) { this.counterUntil = now + CONFIG.slip.counterWindow * this.mods.counter; }
+  /** High guard: head shots that hit the gloves. Only while not punching / slipping / ducking. */
+  tryBlock(kind) { return blocks(this.mods, kind, this.busy); }
+  takeBlocked(kind, power = 1) {
+    this.blockFlashMs = 120;
+    this.stamina = Math.max(0, this.stamina - (CONFIG.stamina.hitDrain[kind] || 0) * power * this.mods.drain * CONFIG.ratings.blockDamage);
+    this.x -= this.facing * 4 * power;
+  }
   hasCounter(now) { return now < this.counterUntil; }
   consumeCounter(now) { const open = this.hasCounter(now); this.counterUntil = 0; return open; }
   rangeTo(dummy) { return Math.abs(dummy.x - this.x); }
@@ -91,7 +98,8 @@ export class Player {
     return gap <= spec.reach * this.mods.reach && gap >= (spec.minReach || 90);
   }
   takeDummyHit(kind, power = 1) {
-    this.flashMs = CONFIG.feel.hitPoseMs;
+    this.flashTotal = CONFIG.feel.hitPoseMs * this.mods.stun;
+    this.flashMs = this.flashTotal;
     this.hitKind = kind;
     // small fighters feel it in the gas tank
     const drain = (CONFIG.stamina.hitDrain[kind] || 0) * power * this.mods.drain;
@@ -162,14 +170,15 @@ export class Player {
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
       return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
     }
-    if (this.flashMs > 0) return hitFrame(CONFIG.feel.hitSeq[this.hitKind] || 'hithead', this.flashMs);
+    if (this.flashMs > 0) return hitFrame(CONFIG.feel.hitSeq[this.hitKind] || 'hithead', this.flashMs, this.flashTotal);
     if (this.state === 'moving') return walkFrame(this.moveMs);
     if (this.celebrateAt != null) return victoryFrame(this.scene.nowMs - this.celebrateAt);
     return idleFrame(this.scene.nowMs);
   }
   paint() {
     this.view.setFrame(this.frameName());
-    this.view.tint(this.tired ? 0xffd9c0 : 0xffffff);
+    if (this.blockFlashMs > 0) this.blockFlashMs -= 16;
+    this.view.tint(this.blockFlashMs > 0 ? 0xbfe3ff : this.tired ? 0xffd9c0 : 0xffffff);
     this.view.place(this.x, this.z, this.facing);
   }
   regen(delta, now) {

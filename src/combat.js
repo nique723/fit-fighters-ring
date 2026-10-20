@@ -66,6 +66,19 @@ export class Combat {
       return;
     }
 
+    // high guard: the shot lands on the gloves
+    if (this.dummy.tryBlock(type)) {
+      this.player.connectedThisPunch = true;
+      this.stats.blocked = (this.stats.blocked || 0) + 1;
+      const chip = Math.round(spec.damage * this.player.mods.power * this.dummy.mods.taken * CONFIG.ratings.blockDamage * 10) / 10;
+      this.dummy.takeHit(chip, (CONFIG.stamina.hitDrain[type] || 0) * this.dummy.mods.drain * CONFIG.ratings.blockDamage);
+      this.dummy.takeBlocked(spec.knockback * this.player.mods.power);
+      this.hitstop(40);
+      this.audio.slip();
+      this.popText(this.dummy, 'BLOCKED', '#90cdf4', type === 'body' ? 1.2 : 1.7);
+      return;
+    }
+
     this.player.connectedThisPunch = true;
     this.stats.landed[type] += 1;
     this.stats.points += CONFIG.score.points[type] || 0;
@@ -73,7 +86,8 @@ export class Combat {
 
     const mul = counter ? CONFIG.slip.counterDamageMul : 1;
     // attacker power x defender chin; one decimal so the popup matches health removed
-    const damage = Math.round(spec.damage * mul * this.player.mods.power * this.dummy.mods.taken * 10) / 10;
+    const head = type !== 'body' ? this.dummy.mods.headTaken : 1;
+    const damage = Math.round(spec.damage * mul * this.player.mods.power * this.dummy.mods.taken * head * 10) / 10;
     const drain = ((type === 'body' ? spec.staminaDrain : 0) + (CONFIG.stamina.hitDrain[type] || 0))
       * this.player.mods.power * this.dummy.mods.drain;
     const dead = this.dummy.takeHit(damage, drain);
@@ -118,6 +132,14 @@ export class Combat {
       return;
     }
 
+    if (this.dummy.inJabRange(this.player) && this.player.tryBlock(this.dummy.punchType)) {
+      this.dummy.hitThisJab = false;
+      this.stats.playerBlocks = (this.stats.playerBlocks || 0) + 1;
+      this.player.takeBlocked(this.dummy.punchType, this.dummy.mods.power);
+      this.audio.slip();
+      this.popText(this.player, 'BLOCKED', '#90cdf4', 1.7);
+      return;
+    }
     if (this.dummy.inJabRange(this.player)) {
       this.dummy.hitThisJab = true;
       this.stats.dummyJabsLanded += 1;
@@ -148,6 +170,15 @@ export class Combat {
       duration: 420,
       onComplete: () => label.destroy()
     });
+  }
+
+  popText(who, text, color, height) {
+    const lp = project(who.x, who.z, height);
+    const label = this.scene.add.text(lp.x, lp.y, text, {
+      fontFamily: 'Impact, system-ui, sans-serif', fontSize: '26px', color, stroke: '#1a202c', strokeThickness: 5
+    }).setOrigin(0.5, 1).setDepth(12);
+    if (this.scene.uiCam) this.scene.uiCam.ignore(label);
+    this.scene.tweens.add({ targets: label, y: lp.y - 30, alpha: 0, duration: 420, onComplete: () => label.destroy() });
   }
 
   shots() {
