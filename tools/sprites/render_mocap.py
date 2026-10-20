@@ -80,7 +80,8 @@ FIGHTERS = {
     'malachi': dict(height=1.88, glove_model='gloves/fight_glove.glb',
                     glove_colors={'main': (0.86, 0.86, 0.88), 'accent': (0.04, 0.16, 0.62), 'main_metal': 0.0, 'accent_metal': 1.0},
                     glove=(0.9, 0.9, 0.9, 1), cuff=(0.05, 0.1, 0.5, 1), moves={}),
-    # green body + gold thumb: black gloves would vanish against his black top with the guard up
+    # green body + gold thumb: black gloves would vanish against his black top with the guard up.
+    # Model: Meshy-rigged GLB (height ignored; rigged models keep their own size)
     'joe': dict(height=1.78, glove_model='gloves/fight_glove.glb',
                 glove_colors={'main': (0.04, 0.40, 0.17), 'accent': (0.85, 0.62, 0.16), 'main_metal': 0.0, 'accent_metal': 1.0},
                 glove=(0.05, 0.4, 0.17, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
@@ -343,9 +344,36 @@ def scaled(p, k, ankle=0.0):
     return d
 
 
+def render_hero(arm, meshes, H, k_hip, outdir):
+    """Full-body portrait for menus: guard-up stance, front three-quarter from the lead side,
+    perspective lens, ring lighting with a warm key and a red rim. 720x1080, transparent."""
+    retarget_frame(arm, clip('jab_cross'), 55, 1.0, k_hip)
+    floor_fix(meshes, arm)
+    sc = bpy.context.scene
+    cam = bpy.data.objects.new('hero_cam', bpy.data.cameras.new('hero_cam')); sc.collection.objects.link(cam); sc.camera = cam
+    cam.data.lens = 70
+    sc.render.resolution_x, sc.render.resolution_y = 720, 1080
+    target = Vector((0.05, 0.0, H * 0.52))
+    # fighter faces -Y, lead (left) side is +X: camera in front, swung toward the lead shoulder
+    yaw = math.radians(16); dist = H * 2.45
+    cam.location = target + Vector((math.sin(yaw) * dist, -math.cos(yaw) * dist, H * 0.06))
+    cam.rotation_euler = (target - cam.location).to_track_quat('-Z', 'Y').to_euler()
+    def light(name, loc, energy, color, size):
+        d = bpy.data.lights.new(name, 'AREA'); d.energy = energy; d.color = color; d.size = size
+        o = bpy.data.objects.new(name, d); sc.collection.objects.link(o); o.location = loc
+        o.rotation_euler = (Vector((0, 0, H * 0.6)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+    light('hero_key', (2.2, -3.0, 3.4), 900, (1.0, 0.94, 0.86), 2.5)        # warm overhead key, front
+    light('hero_rim_r', (-2.4, 2.2, 2.6), 650, (1.0, 0.25, 0.22), 1.2)      # red rim, behind
+    light('hero_rim_b', (2.6, 2.4, 2.2), 380, (0.45, 0.6, 1.0), 1.2)       # blue rim, behind other side
+    light('hero_fill', (-3.0, -2.5, 1.2), 110, (0.7, 0.8, 1.0), 3.0)       # cool fill
+    sc.render.filepath = f'{outdir}/hero.png'; bpy.ops.render.render(write_still=True)
+
+
 def main():
     args = sys.argv[1:]
     probe = None
+    hero = '--hero' in args
+    if hero: args = [a for a in args if a != '--hero']
     if '--probe' in args:
         i = args.index('--probe'); probe = (args[i + 1], [int(x) for x in args[i + 2].split(',')]); args = args[:i]
     name, glb, outdir = args[:3]
@@ -387,6 +415,9 @@ def main():
         floor_fix(meshes, arm)
         render(key)
 
+    if hero:
+        render_hero(arm, meshes, H, k_hip, outdir)
+        return
     if probe:
         for fr in probe[1]: mocap(f'{probe[0]}_f{fr:03d}', probe[0], fr, 1.0)
         return

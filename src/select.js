@@ -2,7 +2,7 @@ import { CONFIG } from './config.js';
 import { fighter, RATING_KEYS, RATING_LABELS } from './ratings.js';
 
 /** Head-and-shoulders crop of idle0, framed the same for every fighter whatever their canvas. */
-function portrait(f) {
+export function portrait(f) {
   const [w, h] = f.canvas || [480, 504];
   const [ax, ay] = f.anchor || [CONFIG.sprite.anchorX, CONFIG.sprite.anchorY];
   const ppm = CONFIG.sprite.pxPerM, H = f.height || 1.8;
@@ -13,6 +13,12 @@ function portrait(f) {
     `top:${(-(top - 0.06 * ppm) * s).toFixed(1)}%;left:calc(50% - ${((ax * w + 18) * s / 100).toFixed(3)} * var(--ph))">`;
 }
 
+/** Full-body hero portrait when the fighter has one; the sprite crop otherwise. */
+export function heroPic(f, mirror = false) {
+  if (!f.hero) return portrait(f);
+  return `<img class="hero${mirror ? ' mirror' : ''}" alt="" src="fighters/${f.id}/hero.webp">`;
+}
+
 const feet = (m) => {
   if (!m) return '';
   const inches = Math.round(m / 0.0254);
@@ -20,7 +26,8 @@ const feet = (m) => {
 };
 
 /**
- * Fighter select: pick YOU, then OPPONENT, compare ratings, go to the ring.
+ * Fighter select, as a Tale of the Tape: pick YOU, then OPPONENT (roster row or the big panels),
+ * ratings face off between them, WALK OUT goes to the ring.
  * DOM overlay (#select). Calls onConfirm({ player, opponent }) and waits for it (asset loading).
  */
 export class FighterSelect {
@@ -66,14 +73,15 @@ export class FighterSelect {
 
   render() {
     const P = fighter(this.pick.player), O = fighter(this.pick.opponent);
-    const slot = (key, f, label) => `
-      <button type="button" class="sl-slot ${this.slot === key ? 'active' : ''} ${key}" data-act="slot" data-slot="${key}">
-        <span>${label}</span><b>${f.name}</b></button>`;
+    const big = (key, f, label) => `
+      <button type="button" class="sl-big ${key} ${this.slot === key ? 'active' : ''}" data-act="slot" data-slot="${key}">
+        <span class="sl-tag">${label}</span><span class="sl-spot"></span>
+        <div class="sl-bigpic">${heroPic(f, key === 'opponent')}</div>
+        <b>${f.name}</b><small>${feet(f.height)}${f.trait ? ' · ' + f.trait : ''}</small></button>`;
     const cards = CONFIG.roster.map((f) => {
       const tag = this.pick.player === f.id ? 'you' : this.pick.opponent === f.id ? 'opp' : '';
       return `<button type="button" class="sl-card ${tag}" data-act="fighter" data-id="${f.id}">
-        <div class="sl-pic">${portrait(f)}</div>
-        <b>${f.name}</b><small>${feet(f.height)}${f.trait ? ' · ' + f.trait : ''}</small>${tag ? `<i>${tag === 'you' ? 'YOU' : 'OPP'}</i>` : ''}</button>`;
+        <div class="sl-pic">${heroPic(f)}</div><b>${f.name}</b>${tag ? `<i>${tag === 'you' ? 'YOU' : 'OPP'}</i>` : ''}</button>`;
     }).join('');
     const rows = RATING_KEYS.map((k) => {
       const a = (P.stats || {})[k] ?? 5, b = (O.stats || {})[k] ?? 5;
@@ -82,11 +90,14 @@ export class FighterSelect {
     }).join('');
     this.el.innerHTML = `
       <div class="sl-box">
-        <div class="sl-head">${this.slot === 'player' ? 'Choose your fighter' : 'Choose your opponent'}</div>
-        <div class="sl-slots">${slot('player', P, 'You')}<span class="sl-vs">vs</span>${slot('opponent', O, 'Opponent')}</div>
+        <div class="sl-head"><b>Tale of the tape</b><small>${this.slot === 'player' ? 'Pick your fighter' : 'Pick your opponent'}</small></div>
+        <div class="sl-tape">
+          ${big('player', P, 'You')}
+          <div class="sl-mid"><div class="sl-vs" key="${P.id}-${O.id}">VS</div><div class="sl-compare">${rows}</div></div>
+          ${big('opponent', O, 'Opponent')}
+        </div>
         <div class="sl-grid">${cards}</div>
-        <div class="sl-compare">${rows}</div>
-        <button type="button" class="sl-go" data-act="go">To the ring</button>
+        <button type="button" class="sl-go" data-act="go">Walk out</button>
       </div>`;
   }
 }
