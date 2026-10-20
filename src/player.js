@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
-import { FighterView, idleFrame, walkFrame, punchFrame } from './fighter-view.js';
+import { FighterView, idleFrame, walkFrame, punchFrame, hitFrame, victoryFrame, blockFrame } from './fighter-view.js';
+import { modsFor, blocks } from './ratings.js';
 
 const ACTION_STATES = new Set(['startup', 'active', 'recovery', 'slipping', 'ducking']);
 
@@ -23,8 +24,14 @@ export class Player {
     this.hitKind = 'jab';
     this.moveMs = 0;
     this.weightX = 0;
-    this.view = new FighterView(scene, 'p-');
+    this.view = new FighterView(scene, (scene.fighters?.player ?? 'p') + '-');
+    this.setFighter(scene.fighters?.player ?? 'p');
     this.paint();
+  }
+  setFighter(id) {
+    this.fighterId = id;
+    this.mods = modsFor(id);
+    this.view.setFighter(id);
   }
   get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }
   get busy() { return ACTION_STATES.has(this.state); }
@@ -38,20 +45,23 @@ export class Player {
   spendStamina(cost) { this.stamina = Math.max(0, this.stamina - cost); this.lastActionAt = this.scene.nowMs; }
   tryPunch(type, instant) {
     const spec = CONFIG.punches[type];
-    if (!(this.canAct() || this.canLink()) || this.stamina < spec.staminaCost) return false;
-    this.spendStamina(spec.staminaCost);
+    const cost = spec.staminaCost * this.mods.cost;
+    if (!(this.canAct() || this.canLink()) || this.stamina < cost) return false;
+    this.spendStamina(cost);
+    this.celebrateAt = null;
     this.punchType = type;
     this.weightX = type === 'cross' ? 18 : type === 'upper' ? 14 : type === 'body' ? 10 : 6;
     this.hitThisPunch = false;
     this.connectedThisPunch = false;
     this.state = 'startup';
     this.phaseMs = 0;
-    this.phaseDuration = instant ? 0 : this.scaled(spec.startup);
+    this.phaseDuration = instant ? 0 : this.scaled(spec.startup * this.mods.speed);
     return true;
   }
   tryDuck() {
-    if (!this.canAct() || this.stamina < CONFIG.duck.staminaCost) return false;
-    this.spendStamina(CONFIG.duck.staminaCost);
+    const cost = CONFIG.duck.staminaCost * this.mods.cost;
+    if (!this.canAct() || this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.state = 'ducking';
     this.phaseMs = 0;
     this.phaseDuration = CONFIG.duck.duration;
@@ -59,8 +69,9 @@ export class Player {
   }
   isDucking() { return this.state === 'ducking'; }
   trySlip() {
-    if (!this.canAct() || this.stamina < CONFIG.slip.staminaCost) return false;
-    this.spendStamina(CONFIG.slip.staminaCost);
+    const cost = CONFIG.slip.staminaCost * this.mods.cost;
+    if (!this.canAct() || this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.state = 'slipping';
     this.phaseMs = 0;
     this.phaseDuration = CONFIG.slip.duration;
@@ -68,7 +79,15 @@ export class Player {
     return true;
   }
   isSlipping() { return this.state === 'slipping'; }
-  openCounter(now) { this.counterUntil = now + CONFIG.slip.counterWindow; }
+  openCounter(now) { this.counterUntil = now + CONFIG.slip.counterWindow * this.mods.counter; }
+  /** High guard: head shots that hit the gloves. Only while not punching / slipping / ducking. */
+  tryBlock(kind) { return blocks(this.mods, kind, this.busy); }
+  takeBlocked(kind, power = 1) {
+    this.blockFlashMs = 120;
+    this.blockMs = CONFIG.feel.blockPoseMs;
+    this.stamina = Math.max(0, this.stamina - (CONFIG.stamina.hitDrain[kind] || 0) * power * this.mods.drain * CONFIG.ratings.blockDamage);
+    this.x -= this.facing * 4 * power;
+  }
   hasCounter(now) { return now < this.counterUntil; }
   consumeCounter(now) { const open = this.hasCounter(now); this.counterUntil = 0; return open; }
   rangeTo(dummy) { return Math.abs(dummy.x - this.x); }
@@ -77,14 +96,20 @@ export class Player {
     const spec = CONFIG.punches[this.punchType];
     if (!spec || !this.inLane(dummy, spec.lane)) return false;
     const gap = this.rangeTo(dummy);
-    return gap <= spec.reach && gap >= (spec.minReach || 90);
+    return gap <= spec.reach * this.mods.reach && gap >= (spec.minReach || 90);
   }
-  takeDummyHit(kind) {
-    this.flashMs = CONFIG.feel.hitPoseMs;
+  takeDummyHit(kind, power = 1) {
+    this.flashTotal = CONFIG.feel.hitPoseMs * this.mods.stun;
+    this.flashMs = this.flashTotal;
     this.hitKind = kind;
-    this.x -= this.facing * 10;
+    // small fighters feel it in the gas tank
+    const drain = (CONFIG.stamina.hitDrain[kind] || 0) * power * this.mods.drain;
+    this.stamina = Math.max(0, this.stamina - drain);
+    this.lastActionAt = this.scene.nowMs;
+    this.x -= this.facing * 10 * power * this.mods.taken;
   }
   update(delta, axis, depthAxis = 0) {
+    if (this.blockMs > 0) this.blockMs -= delta;
     if (this.flashMs > 0) this.flashMs -= delta;
     if (this.state === 'slipping') {
       const t = Math.min(1, this.phaseMs / this.phaseDuration);
@@ -100,10 +125,12 @@ export class Player {
       const norm = axis !== 0 && depthAxis !== 0 ? Math.SQRT1_2 : 1;
       const dt = delta / 1000;
       const tiredMul = this.tired ? 0.75 : 1;
-      this.x += axis * CONFIG.player.moveSpeed * norm * tiredMul * dt;
-      this.z += depthAxis * CONFIG.player.depthSpeed * norm * tiredMul * dt;
+      const move = this.mods.move;
+      this.x += axis * CONFIG.player.moveSpeed * move * norm * tiredMul * dt;
+      this.z += depthAxis * CONFIG.player.depthSpeed * move * norm * tiredMul * dt;
       this.state = moving ? 'moving' : (this.tired ? 'tired' : 'idle');
       this.moveMs = moving ? this.moveMs + delta * (axis * this.facing < 0 ? -1 : 1) : 0;
+      if (moving) this.celebrateAt = null;
     }
     this.clamp();
     this.paint();
@@ -127,7 +154,7 @@ export class Player {
       const spec = CONFIG.punches[this.punchType];
       this.state = 'recovery';
       this.phaseMs = 0;
-      this.phaseDuration = this.scaled(spec.recovery);
+      this.phaseDuration = this.scaled(spec.recovery * this.mods.speed);
       return this.connectedThisPunch ? 'recovered-hit' : 'recovered-whiff';
     }
     if (this.state === 'recovery' || this.state === 'slipping' || this.state === 'ducking') {
@@ -145,18 +172,21 @@ export class Player {
     if (this.state === 'startup' || this.state === 'active' || this.state === 'recovery') {
       return punchFrame(shot, this.state, this.phaseMs, this.phaseDuration);
     }
-    if (this.flashMs > 0) return this.hitKind === 'body' ? 'hitbody' : 'hithead';
+    if (this.blockMs > 0) return blockFrame(this.blockMs);
+    if (this.flashMs > 0) return hitFrame(CONFIG.feel.hitSeq[this.hitKind] || 'hithead', this.flashMs, this.flashTotal);
     if (this.state === 'moving') return walkFrame(this.moveMs);
+    if (this.celebrateAt != null) return victoryFrame(this.scene.nowMs - this.celebrateAt);
     return idleFrame(this.scene.nowMs);
   }
   paint() {
     this.view.setFrame(this.frameName());
-    this.view.tint(this.tired ? 0xffd9c0 : 0xffffff);
+    if (this.blockFlashMs > 0) this.blockFlashMs -= 16;
+    this.view.tint(this.blockFlashMs > 0 ? 0xbfe3ff : this.tired ? 0xffd9c0 : 0xffffff);
     this.view.place(this.x, this.z, this.facing);
   }
   regen(delta, now) {
     if (this.busy) return;
     if (now - this.lastActionAt < CONFIG.stamina.regenDelay) return;
-    this.stamina = Math.min(CONFIG.stamina.max, this.stamina + CONFIG.stamina.regenPerSec * (delta / 1000));
+    this.stamina = Math.min(CONFIG.stamina.max, this.stamina + CONFIG.stamina.regenPerSec * this.mods.regen * (delta / 1000));
   }
 }

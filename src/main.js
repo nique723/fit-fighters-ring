@@ -8,18 +8,42 @@ import { Combat } from './combat.js';
 import { UI } from './ui.js';
 import { createStats } from './stats.js';
 import { CameraMode } from './camera.js';
+import { fighter, RATING_KEYS, RATING_LABELS, checkRoster } from './ratings.js';
+import { FighterSelect } from './select.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
   preload() {
-    for (const f of CONFIG.sprite.frames) {
-      this.load.image('p-' + f, 'fighters/p/' + f + '.webp');
-      this.load.image('o-' + f, 'fighters/o/' + f + '.webp');
-    }
+    // Only the two fighters in this fight. Others load when picked (ensureFighters).
+    this.loadedFighters = new Set();
+    this.fighters = pickFighters();
+    for (const id of new Set([this.fighters.player, this.fighters.opponent])) this.queueFighter(id);
     this.load.image('arena', 'arena/arena-96.webp');
+  }
+  queueFighter(id) {
+    const f = CONFIG.roster.find((r) => r.id === id) || {};
+    const frames = f.mocap ? CONFIG.sprite.frames.concat(CONFIG.sprite.mocapFrames) : CONFIG.sprite.frames;
+    for (const fr of frames) this.load.image(id + '-' + fr, 'fighters/' + id + '/' + fr + '.webp');
+    this.loadedFighters.add(id);
+  }
+  /** Load any fighter not loaded yet; resolves when their frames are ready. */
+  ensureFighters(ids) {
+    const need = ids.filter((id) => !this.loadedFighters.has(id));
+    if (!need.length) return Promise.resolve();
+    need.forEach((id) => this.queueFighter(id));
+    return new Promise((resolve) => { this.load.once('complete', resolve); this.load.start(); });
+  }
+  setFighters(pick) {
+    this.fighters = pick;
+    this.player.setFighter(pick.player);
+    this.dummy.setFighter(pick.opponent);
+    this.ui.setNames(fighterName(pick.player), fighterName(pick.opponent));
+    document.getElementById('fighter-pick').textContent = 'Fighters';
+    renderCard(pick);
   }
   create() {
     this.nowMs = 0;
+    window.__ring = this;   // test/debug hook: inspect fighters and fight state from the console
     this.cameras.main.setBackgroundColor(0x07090c);
     this.drawRing();
     this.player = new Player(this, CONFIG.player.startX, CONFIG.player.startZ);
@@ -40,17 +64,21 @@ class ArenaScene extends Phaser.Scene {
       const btn = document.getElementById('sound-test');
       if (btn) { btn.textContent = state === 'running' ? 'Sound on' : 'Tap sound'; btn.classList.toggle('on', state === 'running'); }
     };
+    this.setFighters(this.fighters);
+    this.select = new FighterSelect(async (pick) => {
+      await this.ensureFighters([pick.player, pick.opponent]);
+      this.setFighters(pick);
+    });
+    document.getElementById('fighter-pick').addEventListener('click', () => {
+      if (!this.stats.running) this.select.open(this.fighters);   // no swapping mid-fight
+    });
+    // a shared link with ?p=&o= goes straight to the ring; otherwise pick first
+    const q = new URLSearchParams(window.location.search);
+    if (!(q.get('p') && q.get('o'))) this.select.open(this.fighters);
     const fight = document.getElementById('fight-toggle');
     fight.addEventListener('click', () => {
-      if (this.stats.running) {
-        this.combat.stop();
-        fight.textContent = 'Start';
-        fight.classList.remove('stop');
-      } else {
-        this.combat.start();
-        fight.textContent = 'Stop';
-        fight.classList.add('stop');
-      }
+      if (this.stats.running) this.combat.stop();
+      else this.combat.start();
     });
     document.getElementById('sound-test').addEventListener('pointerdown', (e) => { e.preventDefault(); unlock(); });
     document.addEventListener('pointerdown', unlock, { once: true });
@@ -123,8 +151,19 @@ class ArenaScene extends Phaser.Scene {
     if (power > 0.008) this.flashBulbs(0, 6);
     this.time.delayedCall(120, () => g.clear());
   }
+  /** Button + fighter card follow the fight state (a fight can end on its own after 3 rounds). */
+  syncFightUi() {
+    const live = !!this.stats.running;
+    if (live === this.wasLive) return;
+    this.wasLive = live;
+    const fight = document.getElementById('fight-toggle');
+    fight.textContent = live ? 'Stop' : 'Start';
+    fight.classList.toggle('stop', live);
+    document.getElementById('fighter-card').classList.toggle('hidden', live);
+  }
   update(_time, delta) {
     const dt = Math.min(delta, 32);
+    this.syncFightUi();
     this.nowMs += dt;
     if (this.inputBus.consumeDebugToggle()) this.ui.toggleDebug();
     this.combat.update(dt, this.inputBus);
@@ -133,6 +172,36 @@ class ArenaScene extends Phaser.Scene {
     this.ui.update(this.player, this.dummy, this.stats, this.combat.frozen);
   }
 }
+
+/** Pre-fight card: your fighter's trait and ratings, and who you're facing. */
+function renderCard({ player, opponent }) {
+  const el = document.getElementById('fighter-card');
+  if (!el) return;
+  const f = fighter(player);
+  const rows = RATING_KEYS.map((k) => {
+    const v = (f.stats || {})[k] ?? 5;
+    return `<div class="fc-row"><span>${RATING_LABELS[k]}</span><i><b style="width:${v * 10}%"></b></i><em>${v}</em></div>`;
+  }).join('');
+  el.innerHTML = `<div class="fc-name">${f.name}</div><div class="fc-trait">${f.trait || ''}</div>${rows}` +
+    `<div class="fc-vs">vs ${fighterName(opponent)}</div>`;
+}
+
+function fighterName(id) {
+  return (CONFIG.roster.find((r) => r.id === id) || { name: id.toUpperCase() }).name;
+}
+
+/** ?p=<id>&o=<id> overrides the defaults; unknown ids fall back. Never the same fighter twice. */
+function pickFighters() {
+  const ids = CONFIG.roster.map((r) => r.id);
+  const q = new URLSearchParams(window.location.search);
+  const ok = (id) => (ids.includes(id) ? id : null);
+  const player = ok(q.get('p')) || CONFIG.defaultPlayer;
+  let opponent = ok(q.get('o')) || CONFIG.defaultOpponent;
+  if (opponent === player) opponent = ids.find((id) => id !== player);
+  return { player, opponent };
+}
+
+checkRoster();
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

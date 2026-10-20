@@ -53,6 +53,57 @@
       #fight-toggle { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 50; min-width: 180px; height: 64px; padding: 0 28px; border-radius: 16px; border: 3px solid #fff; background: #f6e05e; color: #1a202c; font: 900 22px/1 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 8px 0 #b7791f; }
       #fight-toggle.stop { background: #e53e3e; color: #fff; box-shadow: 0 8px 0 #9b2c2c; }
       #sound-test { position: absolute; top: 8px; left: 10px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+      #fighter-pick { position: absolute; top: 8px; left: 96px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+      #fighter-card { position: absolute; left: 50%; bottom: 104px; transform: translateX(-50%); z-index: 45; width: 240px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18); background: rgba(8,10,14,.86); color: #edf2f7; font: 600 11px/1.2 system-ui, sans-serif; pointer-events: none; }
+      #fighter-card.hidden { display: none; }
+      /* fighter select */
+      #select { display: none; position: absolute; inset: 0; z-index: 80; background: radial-gradient(ellipse at 50% 30%, rgba(30,24,10,.94), rgba(5,6,10,.97) 70%); color: #edf2f7; font: 600 12px/1.2 system-ui, sans-serif; overflow-y: auto; }
+      #select.open { display: flex; align-items: flex-start; justify-content: center; }
+      .sl-box { width: min(760px, 100% - 32px); padding: 18px 0 20px; display: flex; flex-direction: column; gap: 12px; }
+      .sl-head { text-align: center; font: 900 26px/1 Impact, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #f6e05e; }
+      .sl-slots { display: flex; align-items: center; justify-content: center; gap: 10px; }
+      .sl-vs { font: 900 16px Impact, system-ui, sans-serif; color: #a0aec0; text-transform: uppercase; }
+      .sl-slot { flex: 0 1 220px; padding: 7px 12px; border-radius: 10px; border: 2px solid rgba(255,255,255,.18); background: rgba(12,16,22,.85); color: #edf2f7; text-align: left; }
+      .sl-slot span { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #a0aec0; }
+      .sl-slot b { font: 900 17px/1.1 Impact, system-ui, sans-serif; letter-spacing: .05em; }
+      .sl-slot.player.active { border-color: #f6e05e; } .sl-slot.opponent.active { border-color: #fc8181; }
+      .sl-grid { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 6px; scroll-snap-type: x mandatory; }
+      .sl-card { position: relative; flex: 0 0 132px; scroll-snap-align: start; padding: 0 0 8px; border-radius: 12px; border: 2px solid rgba(255,255,255,.14); background: rgba(16,20,28,.9); color: #edf2f7; overflow: hidden; text-align: center; }
+      .sl-card.you { border-color: #f6e05e; } .sl-card.opp { border-color: #fc8181; }
+      .sl-pic { --ph: 128px; position: relative; height: var(--ph); background: #1a202c; overflow: hidden; }
+      .sl-pic img { position: absolute; width: auto; max-width: none; }
+      .sl-card b { display: block; margin-top: 6px; font: 900 15px/1 Impact, system-ui, sans-serif; letter-spacing: .05em; }
+      .sl-card small { display: block; margin: 3px 6px 0; font-size: 9px; color: #a0aec0; text-transform: uppercase; letter-spacing: .04em; min-height: 22px; }
+      .sl-card i { position: absolute; top: 6px; left: 6px; padding: 2px 6px; border-radius: 6px; font: 800 9px/1.2 system-ui, sans-serif; font-style: normal; background: #f6e05e; color: #1a202c; }
+      .sl-card.opp i { background: #fc8181; }
+      .sl-compare { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: rgba(8,10,14,.7); border: 1px solid rgba(255,255,255,.1); }
+      .sl-row { display: grid; grid-template-columns: 18px 1fr 92px 1fr 18px; align-items: center; gap: 8px; }
+      .sl-row span { text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #cbd5e0; }
+      .sl-row em { font-style: normal; text-align: center; color: #a0aec0; } .sl-row em.up { color: #fff; font-weight: 900; }
+      .sl-row i { height: 7px; border-radius: 4px; background: #2d3748; overflow: hidden; display: flex; }
+      .sl-row i.l { justify-content: flex-end; } .sl-row i.l b { background: #f6e05e; } .sl-row i.r b { background: #fc8181; }
+      .sl-row b { display: block; height: 100%; }
+      .sl-go { align-self: center; min-width: 220px; height: 52px; border-radius: 14px; border: 3px solid #fff; background: #f6e05e; color: #1a202c; font: 900 18px/1 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 6px 0 #b7791f; }
+      .sl-go:disabled { opacity: .7; }
+      .sl-go { position: sticky; bottom: 12px; z-index: 2; }   /* always reachable, however long the roster */
+      /* room to spare: wrap the roster into rows instead of a hidden side-scroll */
+      @media (min-height: 501px) { .sl-grid { flex-wrap: wrap; justify-content: center; overflow: visible; } .sl-card { flex-basis: 118px; } .sl-pic { --ph: 116px; } }
+      @media (max-height: 500px) {
+        .sl-box { padding: 8px 0 10px; gap: 7px; }
+        .sl-head { font-size: 18px; }
+        .sl-slot { padding: 4px 10px; } .sl-slot b { font-size: 14px; }
+        .sl-card { flex-basis: 104px; } .sl-pic { --ph: 84px; } .sl-card small { display: none; }
+        .sl-compare { padding: 6px 10px; gap: 2px; grid-template-columns: 1fr 1fr; column-gap: 18px; }
+        .sl-go { height: 40px; font-size: 15px; }
+      }
+      #fighter-card .fc-name { font: 900 18px/1 Impact, system-ui, sans-serif; letter-spacing: .06em; color: #f6e05e; }
+      #fighter-card .fc-trait { margin: 3px 0 8px; color: #cbd5e0; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+      #fighter-card .fc-row { display: grid; grid-template-columns: 76px 1fr 18px; align-items: center; gap: 6px; margin: 3px 0; }
+      #fighter-card .fc-row i { height: 6px; border-radius: 3px; background: #2d3748; overflow: hidden; }
+      #fighter-card .fc-row b { display: block; height: 100%; background: #f6e05e; }
+      #fighter-card .fc-row em { font-style: normal; text-align: right; color: #fff; }
+      #fighter-card .fc-vs { margin-top: 7px; color: #a0aec0; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; }
+      @media (max-height: 500px) { #fighter-card { bottom: 96px; transform: translateX(-50%) scale(.85); transform-origin: bottom center; } }
       #sound-test.on { background: #276749; border-color: #68d391; }
       #full-toggle { position: absolute; top: 8px; right: 96px; z-index: 40; width: 32px; height: 32px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 16px/1 system-ui, sans-serif; }
       #camera-toggle { position: absolute; top: 8px; right: 10px; z-index: 40; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.28); background: rgba(12,16,22,.82); color: #edf2f7; font: 700 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
@@ -79,6 +130,9 @@
         <div id="crt"></div>
         <button type="button" id="fight-toggle">Start</button>
         <button type="button" id="sound-test">Sound</button>
+        <button type="button" id="fighter-pick">Fighters</button>
+        <div id="fighter-card"></div>
+        <div id="select" aria-label="Fighter select"></div>
         <button type="button" id="full-toggle" aria-label="Full screen">⛶</button>
         <button type="button" id="camera-toggle">Camera</button>
         <div id="camera-cal">Hold your guard. Don't bounce.</div>
