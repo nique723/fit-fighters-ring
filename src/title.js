@@ -10,11 +10,10 @@ const ART = { w: 1672, h: 941 };
 // Where flashes may pop, in % of the art: [x0, x1, y0, y1, weight]. Crowd only — side stands
 // and the gaps between fighters, clear of faces and the title.
 const ZONES = [
-  [1, 13, 30, 62, 3],    // left stands
-  [87, 99, 30, 62, 3],   // right stands
-  [46, 54, 34, 50, 1.2], // between fighters 2 and 3
-  [69, 73, 36, 54, 0.8], // between fighters 3 and 4
-  [14, 22, 32, 40, 0.6]  // behind fighter 1's shoulder
+  [1, 13, 34, 62, 3],    // left stands
+  [88, 99, 34, 62, 3],   // right stands
+  [49, 54, 36, 46, 1],   // between fighters 2 and 3
+  [68, 72, 38, 54, 0.8]  // between fighters 3 and 4
 ];
 
 export class TitleScreen {
