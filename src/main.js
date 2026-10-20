@@ -11,6 +11,8 @@ import { CameraMode } from './camera.js';
 import { fighter, RATING_KEYS, RATING_LABELS, checkRoster } from './ratings.js';
 import { FighterSelect } from './select.js';
 import { TitleScreen } from './title.js';
+import { RingIntro } from './intro.js';
+import { ArenaAudio } from './arena-audio.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
@@ -66,17 +68,27 @@ class ArenaScene extends Phaser.Scene {
       if (btn) { btn.textContent = state === 'running' ? 'Sound on' : 'Tap sound'; btn.classList.toggle('on', state === 'running'); }
     };
     this.setFighters(this.fighters);
-    this.select = new FighterSelect(async (pick) => {
+    this.arena = new ArenaAudio(this.audio);
+    this.intro = new RingIntro(this.arena);
+    // walk out: load the pair, put them in the ring, run the main-event intro, ring the bell
+    const walkOut = async (pick) => {
       await this.ensureFighters([pick.player, pick.opponent]);
       this.setFighters(pick);
-    });
+      this.arena.start();   // no-op if the crowd is already up
+      this.intro.play(pick, () => { if (!this.stats.running) this.combat.start(); });
+    };
+    this.select = new FighterSelect(walkOut);
     document.getElementById('fighter-pick').addEventListener('click', () => {
       if (!this.stats.running) this.select.open(this.fighters);   // no swapping mid-fight
     });
     // a shared link with ?p=&o= goes straight to the ring; otherwise landing page -> pick -> ring
     const q = new URLSearchParams(window.location.search);
     if (!(q.get('p') && q.get('o'))) {
-      this.title = new TitleScreen(() => this.select.open(this.fighters));
+      this.title = new TitleScreen({
+        arena: this.arena,
+        onPlay: () => this.select.open(this.fighters),
+        onQuickFight: (pick) => walkOut(pick)
+      });
       this.title.open();
     }
     const fight = document.getElementById('fight-toggle');

@@ -106,6 +106,11 @@ export class Combat {
       this.ui.showCounter();
     }
 
+    // the crowd reacts to power shots and knockdowns
+    if (this.scene.arena) {
+      if (dead) this.scene.arena.cheer(1, 2.8);
+      else if (type !== 'jab') this.scene.arena.cheer(counter ? 0.7 : 0.4, 1.2);
+    }
     if (dead) {
       this.stats.dummyKnockdowns += 1;
       this.stats.points += CONFIG.score.points.knockdown;
@@ -219,6 +224,7 @@ export class Combat {
       this.stats.finished = true;
       const n = this.shots();
       this.ui.showResult('3 ROUNDS', n.you, n.him);
+      if (this.scene.arena) { this.scene.arena.bell(3); this.scene.arena.cheer(0.9, 2.6); }
       // winner raises a glove
       if (n.you > n.him) this.player.celebrateAt = this.scene.nowMs;
       else if (n.him > n.you) this.dummy.celebrateAt = this.scene.nowMs;
@@ -228,6 +234,7 @@ export class Combat {
     this.stats.roundMs = CONFIG.score.roundMs;
     this.dummy.level = this.stats.round + 1;
     this.audio.telegraph();
+    if (this.scene.arena) this.scene.arena.bell(2);   // next round
   }
 
   update(delta, input) {
