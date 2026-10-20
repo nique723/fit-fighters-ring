@@ -38,6 +38,7 @@ export class Dummy {
   setFighter(id) {
     this.fighterId = id;
     this.mods = modsFor(id);
+    this.persona = (CONFIG.roster.find((r) => r.id === id) || {}).ai || null;
     this.view.setFighter(id);
   }
   get telegraphing() { return this.state === 'startup'; }
@@ -107,8 +108,16 @@ export class Dummy {
     return this.health <= 0;
   }
   get style() { return CONFIG.styles[this.styleIndex % CONFIG.styles.length]; }
+  /** Style (difficulty stage) x this fighter's own habits, renormalised. */
+  get weights() {
+    const base = this.style.weight, bias = (this.persona && this.persona.punches) || {};
+    const keys = ['jab', 'cross', 'hook', 'body'];
+    const raw = Object.fromEntries(keys.map((k) => [k, (base[k] || 0) * (bias[k] ?? 1)]));
+    const sum = keys.reduce((a, k) => a + raw[k], 0) || 1;
+    return Object.fromEntries(keys.map((k) => [k, raw[k] / sum]));
+  }
   pickPunch(gap) {
-    const w = this.style.weight;
+    const w = this.weights;
     const roll = Math.random();
     const hookW = w.hook || 0;
     let type = roll < w.jab ? 'jab' : roll < w.jab + w.cross ? 'cross' : roll < w.jab + w.cross + hookW ? 'hook' : 'body';
@@ -174,11 +183,12 @@ export class Dummy {
       if (player) {
         const side = this.x >= player.x ? 1 : -1;
         const gap = Math.abs(this.x - player.x);
-        const want = 200 - this.style.step * 0.3;
+        const pr = this.persona || {};
+        const want = 200 - this.style.step * 0.3 + (pr.range || 0);
         // counter style likes to circle; everyone drifts a little so the lane is never static
         this.circleMs -= delta;
         if (this.circleMs <= 0) { this.circleDir = Math.random() < 0.5 ? -1 : 1; this.circleMs = 900 + Math.random() * 1400; }
-        const drift = this.style.id === 'counter' ? 0.22 : this.style.id === 'pressure' ? 0.16 : 0.10;
+        const drift = (this.style.id === 'counter' ? 0.22 : this.style.id === 'pressure' ? 0.16 : 0.10) * (pr.circle ?? 1);
         const tz = Phaser.Math.Clamp(player.z + this.circleDir * drift, 0, 1);
         const aligned = Math.abs(this.z - player.z) <= CONFIG.arena.laneTolerance * 0.8;
         const tx = player.x + side * want;

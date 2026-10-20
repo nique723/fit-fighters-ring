@@ -29,23 +29,30 @@ export const CONFIG = {
   // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
   // Pick on the page (FIGHTER button before the bell) or by URL: ?p=kamarian&o=o
   // stats: 8 ratings, 1-10 each, 5 = baseline. Totals must equal ratings.budget (console warns if not).
-  // anchor: only for sprites rendered on a taller canvas (fighters over ~1.7 m); see anchor.json.
+  // height: metres (card + portrait framing). canvas/anchor: only for sprites rendered on a taller
+  //   canvas (render_mocap.py sizes it to the fighter); copy w/h and anchorX/Y from anchor.json.
+  // ai: how this fighter fights as the opponent — punch preference multipliers on top of the
+  //     difficulty style, circle (sideways movement x), range (px; negative = stands closer).
   roster: [
-    { id: 'p', name: 'CRIMSON GUARD', trait: 'Balanced',
+    { id: 'p', name: 'CRIMSON GUARD', trait: 'Balanced', height: 1.85,
       stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5, guard: 5, experience: 5 } },
-    { id: 'o', name: 'WHITE LIGHTNING', trait: 'Balanced',
+    { id: 'o', name: 'WHITE LIGHTNING', trait: 'Balanced', height: 1.83,
       stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5, guard: 5, experience: 5 } },
     // Small, fast, deep gas tank. The cost: light shots, short reach, and every punch he
     // eats drains his stamina hard (chin 2), so getting hit is how you beat him.
     { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands · quick feet · big engine', mocap: true,
-      anchor: [0.4, 0.9733],
-      stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8, guard: 5, experience: 5 } },
+      height: 1.68, canvas: [480, 544], anchor: [0.4, 0.9733],
+      stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8, guard: 5, experience: 5 },
+      // as the opponent: volume jabs and body work, keeps circling off the line
+      ai: { punches: { jab: 1.6, cross: 0.9, hook: 0.6, body: 1.3 }, circle: 1.7, range: 0 } },
     // Guard never comes down (40% of head shots blocked), heavy hands, ring IQ. The cost: slow
     // feet, slow hands, short gas tank. Beat him with movement, body shots and uppercuts
     // (both go through the guard), and by making him work.
     { id: 'lamar', name: 'LAMAR', trait: 'Guard always up · power · experience', mocap: true,
-      anchor: [0.4, 0.9745],
-      stats: { handSpeed: 2, footwork: 3, power: 8, reach: 4, chin: 3, engine: 4, guard: 9, experience: 7 } }
+      height: 1.80, canvas: [480, 576], anchor: [0.4, 0.9745],
+      stats: { handSpeed: 2, footwork: 3, power: 8, reach: 4, chin: 3, engine: 4, guard: 9, experience: 7 },
+      // as the opponent: walks you down behind the guard, sits in range for the cross and hook
+      ai: { punches: { jab: 0.6, cross: 1.5, hook: 1.6, body: 0.9 }, circle: 0.4, range: -25 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {

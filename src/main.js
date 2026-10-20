@@ -9,19 +9,40 @@ import { UI } from './ui.js';
 import { createStats } from './stats.js';
 import { CameraMode } from './camera.js';
 import { fighter, RATING_KEYS, RATING_LABELS, checkRoster } from './ratings.js';
+import { FighterSelect } from './select.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
   preload() {
-    for (const { id, mocap } of CONFIG.roster) {
-      const frames = mocap ? CONFIG.sprite.frames.concat(CONFIG.sprite.mocapFrames) : CONFIG.sprite.frames;
-      for (const f of frames) this.load.image(id + '-' + f, 'fighters/' + id + '/' + f + '.webp');
-    }
+    // Only the two fighters in this fight. Others load when picked (ensureFighters).
+    this.loadedFighters = new Set();
+    this.fighters = pickFighters();
+    for (const id of new Set([this.fighters.player, this.fighters.opponent])) this.queueFighter(id);
     this.load.image('arena', 'arena/arena-96.webp');
+  }
+  queueFighter(id) {
+    const f = CONFIG.roster.find((r) => r.id === id) || {};
+    const frames = f.mocap ? CONFIG.sprite.frames.concat(CONFIG.sprite.mocapFrames) : CONFIG.sprite.frames;
+    for (const fr of frames) this.load.image(id + '-' + fr, 'fighters/' + id + '/' + fr + '.webp');
+    this.loadedFighters.add(id);
+  }
+  /** Load any fighter not loaded yet; resolves when their frames are ready. */
+  ensureFighters(ids) {
+    const need = ids.filter((id) => !this.loadedFighters.has(id));
+    if (!need.length) return Promise.resolve();
+    need.forEach((id) => this.queueFighter(id));
+    return new Promise((resolve) => { this.load.once('complete', resolve); this.load.start(); });
+  }
+  setFighters(pick) {
+    this.fighters = pick;
+    this.player.setFighter(pick.player);
+    this.dummy.setFighter(pick.opponent);
+    this.ui.setNames(fighterName(pick.player), fighterName(pick.opponent));
+    document.getElementById('fighter-pick').textContent = 'Fighters';
+    renderCard(pick);
   }
   create() {
     this.nowMs = 0;
-    this.fighters = pickFighters();
     window.__ring = this;   // test/debug hook: inspect fighters and fight state from the console
     this.cameras.main.setBackgroundColor(0x07090c);
     this.drawRing();
@@ -43,25 +64,17 @@ class ArenaScene extends Phaser.Scene {
       const btn = document.getElementById('sound-test');
       if (btn) { btn.textContent = state === 'running' ? 'Sound on' : 'Tap sound'; btn.classList.toggle('on', state === 'running'); }
     };
-    this.ui.setNames(fighterName(this.fighters.player), fighterName(this.fighters.opponent));
-    const pick = document.getElementById('fighter-pick');
-    const showPick = () => {
-      pick.textContent = 'Fighter: ' + fighterName(this.fighters.player);
-      renderCard(this.fighters);
-    };
-    showPick();
-    pick.addEventListener('click', () => {
-      if (this.stats.running) return;          // no swapping mid-fight
-      const ids = CONFIG.roster.map((r) => r.id);
-      const player = ids[(ids.indexOf(this.fighters.player) + 1) % ids.length];
-      let opponent = this.fighters.opponent;
-      if (opponent === player) opponent = ids.find((id) => id !== player);
-      this.fighters = { player, opponent };
-      this.player.setFighter(player);
-      this.dummy.setFighter(opponent);
-      this.ui.setNames(fighterName(player), fighterName(opponent));
-      showPick();
+    this.setFighters(this.fighters);
+    this.select = new FighterSelect(async (pick) => {
+      await this.ensureFighters([pick.player, pick.opponent]);
+      this.setFighters(pick);
     });
+    document.getElementById('fighter-pick').addEventListener('click', () => {
+      if (!this.stats.running) this.select.open(this.fighters);   // no swapping mid-fight
+    });
+    // a shared link with ?p=&o= goes straight to the ring; otherwise pick first
+    const q = new URLSearchParams(window.location.search);
+    if (!(q.get('p') && q.get('o'))) this.select.open(this.fighters);
     const fight = document.getElementById('fight-toggle');
     fight.addEventListener('click', () => {
       if (this.stats.running) this.combat.stop();
