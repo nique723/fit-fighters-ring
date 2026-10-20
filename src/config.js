@@ -53,6 +53,13 @@ export const CONFIG = {
       stats: { handSpeed: 2, footwork: 3, power: 8, reach: 4, chin: 3, engine: 4, guard: 9, experience: 7 },
       // as the opponent: walks you down behind the guard, sits in range for the cross and hook
       ai: { punches: { jab: 0.6, cross: 1.5, hook: 1.6, body: 0.9 }, circle: 0.4, range: -25 } },
+    // Strong and built like it: heavy hands and a high guard. The cost: new to boxing (stays stunned
+    // longer, small counter window, telegraphs his shots), slow feet. Make him miss and counter.
+    { id: 'joe', name: 'JOE', trait: 'Power · high guard · new to boxing', mocap: true,
+      height: 1.78, canvas: [480, 568], anchor: [0.4, 0.9742],
+      stats: { handSpeed: 4, footwork: 3, power: 8, reach: 5, chin: 6, engine: 4, guard: 8, experience: 2 },
+      // as the opponent: loads up on hooks and right hands, comes forward, rarely jabs
+      ai: { punches: { jab: 0.5, cross: 1.4, hook: 1.7, body: 1.0 }, circle: 0.6, range: -15 } },
     // Heavyweight: longest arms and heaviest hands on the roster. The cost: slow feet and hands,
     // a short gas tank. He wants you at the end of his jab; get inside and make him move.
     { id: 'malachi', name: 'MALACHI', trait: 'Heavyweight · long reach · power', mocap: true,
