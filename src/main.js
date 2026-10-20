@@ -12,14 +12,14 @@ import { CameraMode } from './camera.js';
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
   preload() {
-    for (const f of CONFIG.sprite.frames) {
-      this.load.image('p-' + f, 'fighters/p/' + f + '.webp');
-      this.load.image('o-' + f, 'fighters/o/' + f + '.webp');
+    for (const { id } of CONFIG.roster) {
+      for (const f of CONFIG.sprite.frames) this.load.image(id + '-' + f, 'fighters/' + id + '/' + f + '.webp');
     }
     this.load.image('arena', 'arena/arena-96.webp');
   }
   create() {
     this.nowMs = 0;
+    this.fighters = pickFighters();
     this.cameras.main.setBackgroundColor(0x07090c);
     this.drawRing();
     this.player = new Player(this, CONFIG.player.startX, CONFIG.player.startZ);
@@ -40,6 +40,22 @@ class ArenaScene extends Phaser.Scene {
       const btn = document.getElementById('sound-test');
       if (btn) { btn.textContent = state === 'running' ? 'Sound on' : 'Tap sound'; btn.classList.toggle('on', state === 'running'); }
     };
+    this.ui.setNames(fighterName(this.fighters.player), fighterName(this.fighters.opponent));
+    const pick = document.getElementById('fighter-pick');
+    const showPick = () => { pick.textContent = 'Fighter: ' + fighterName(this.fighters.player); };
+    showPick();
+    pick.addEventListener('click', () => {
+      if (this.stats.running) return;          // no swapping mid-fight
+      const ids = CONFIG.roster.map((r) => r.id);
+      const player = ids[(ids.indexOf(this.fighters.player) + 1) % ids.length];
+      let opponent = this.fighters.opponent;
+      if (opponent === player) opponent = ids.find((id) => id !== player);
+      this.fighters = { player, opponent };
+      this.player.view.setFighter(player);
+      this.dummy.view.setFighter(opponent);
+      this.ui.setNames(fighterName(player), fighterName(opponent));
+      showPick();
+    });
     const fight = document.getElementById('fight-toggle');
     fight.addEventListener('click', () => {
       if (this.stats.running) {
@@ -132,6 +148,21 @@ class ArenaScene extends Phaser.Scene {
     this.directCamera(dt);
     this.ui.update(this.player, this.dummy, this.stats, this.combat.frozen);
   }
+}
+
+function fighterName(id) {
+  return (CONFIG.roster.find((r) => r.id === id) || { name: id.toUpperCase() }).name;
+}
+
+/** ?p=<id>&o=<id> overrides the defaults; unknown ids fall back. Never the same fighter twice. */
+function pickFighters() {
+  const ids = CONFIG.roster.map((r) => r.id);
+  const q = new URLSearchParams(window.location.search);
+  const ok = (id) => (ids.includes(id) ? id : null);
+  const player = ok(q.get('p')) || CONFIG.defaultPlayer;
+  let opponent = ok(q.get('o')) || CONFIG.defaultOpponent;
+  if (opponent === player) opponent = ids.find((id) => id !== player);
+  return { player, opponent };
 }
 
 const game = new Phaser.Game({

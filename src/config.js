@@ -20,6 +20,16 @@ export const CONFIG = {
       'hook0', 'hook1', 'hook2', 'hook3', 'slip', 'duck', 'hithead', 'hitbody', 'kneel']
   },
 
+  // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
+  // Pick on the page (FIGHTER button before the bell) or by URL: ?p=rising&o=o
+  roster: [
+    { id: 'p', name: 'CRIMSON GUARD' },
+    { id: 'o', name: 'WHITE LIGHTNING' },
+    { id: 'rising', name: 'RISING' }
+  ],
+  defaultPlayer: 'p',
+  defaultOpponent: 'o',
+
   // Broadcast camera (zoom 1 = whole arena visible).
   camera: {
     maxZoom: 1.45,

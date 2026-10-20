@@ -2,7 +2,7 @@
 
 2.5D boxing prototype — 1990s fight-night arena. Phaser 3 + Vite.
 
-- **You:** Crimson Guard (black kit, red gloves). **Opponent:** White Lightning.
+- **Roster:** Crimson Guard (black kit, red gloves), White Lightning, Rising (hoodie, gold gloves — mocap-driven). Pick with the **Fighter** button before the bell, or `?p=rising&o=o`.
 - Fighters are pre-rendered 3D sprites (Meshy models, auto-rigged and posed in Blender — see `tools/sprites`).
 - Move left/right **and** in/out of the ring. Punches only land when you share a lane (`arena.laneTolerance`); step off the line to make him miss, circle past him to switch sides.
 - Broadcast camera zooms in close and pulls out as the fighters separate (`CONFIG.camera`).

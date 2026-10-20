@@ -23,7 +23,7 @@ export class Player {
     this.hitKind = 'jab';
     this.moveMs = 0;
     this.weightX = 0;
-    this.view = new FighterView(scene, 'p-');
+    this.view = new FighterView(scene, (scene.fighters?.player ?? 'p') + '-');
     this.paint();
   }
   get tired() { return this.stamina < CONFIG.stamina.tiredThreshold; }

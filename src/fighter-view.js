@@ -16,6 +16,11 @@ export class FighterView {
     this.lean = 0;
   }
 
+  setFighter(id) {
+    this.prefix = id + '-';
+    this.sprite.setTexture(this.prefix + this.frame);
+  }
+
   setFrame(name) {
     if (name === this.frame) return;
     this.frame = name;

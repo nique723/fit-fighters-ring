@@ -11,7 +11,9 @@ export class UI {
     // dark broadcast strip so the HUD reads over the arena
     this.panel = scene.add.rectangle(w / 2, 0, w, 220, 0x05060c, 0.6).setOrigin(0.5, 0.5).setDepth(19);
 
-    this.pLabel = scene.add.text(24, 58, 'CRIMSON GUARD  ·  STAMINA', {
+    this.pName = 'CRIMSON GUARD';
+    this.dName = 'WHITE LIGHTNING';
+    this.pLabel = scene.add.text(24, 58, this.pName + '  ·  STAMINA', {
       fontFamily: 'Impact, Haettenschweiler, system-ui, sans-serif',
       fontSize: '14px',
       color: '#feb2b2',
@@ -19,7 +21,7 @@ export class UI {
       strokeThickness: 3,
       fontStyle: '700'
     });
-    this.dLabel = scene.add.text(w - 24, 58, 'WHITE LIGHTNING', {
+    this.dLabel = scene.add.text(w - 24, 58, this.dName, {
       fontFamily: 'Impact, Haettenschweiler, system-ui, sans-serif',
       fontSize: '14px',
       color: '#bee3f8',
@@ -138,6 +140,13 @@ export class UI {
     });
   }
 
+  setNames(pName, dName) {
+    this.pName = pName;
+    this.dName = dName;
+    this.pLabel.setText(pName + '  ·  STAMINA');
+    this.dLabel.setText(dName);
+  }
+
   drawBar(bar, bg, ratio) {
     const full = bg.width;
     bar.width = Math.max(2, full * Phaser.Math.Clamp(ratio, 0, 1));
@@ -149,7 +158,7 @@ export class UI {
 
     this.drawBar(this.dHp, this.dHpBg, dummy.health / CONFIG.dummy.maxHealth);
     this.drawBar(this.dSt, this.dStBg, dummy.stamina / CONFIG.stamina.max);
-    if (dummy.style) this.dLabel.setText('WHITE LIGHTNING  ·  ' + dummy.style.name);
+    this.dLabel.setText(this.dName + (dummy.style ? '  ·  ' + dummy.style.name : ''));
     const left = Math.ceil((stats.roundMs || 0) / 1000);
     const you = sumPunches(stats.landed);
     const him = stats.dummyJabsLanded || 0;

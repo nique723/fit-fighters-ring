@@ -29,7 +29,7 @@ export class Dummy {
     this.circleDir = 1;
     this.circleMs = 0;
     this.hookOnly = false;
-    this.view = new FighterView(scene, 'o-');
+    this.view = new FighterView(scene, (scene.fighters?.opponent ?? 'o') + '-');
     this.sparks = scene.add.graphics().setDepth(9);
     this.paint();
   }
