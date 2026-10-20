@@ -62,9 +62,18 @@ MOVES = {
 IK_ONLY = ['upper0', 'upper1']
 
 # height: only needed for unrigged meshes (auto-rigged by automix.py); rigged GLBs keep their size.
+# glove_model: textured glove (gloves/*.glb, a RIGHT glove: cuff -Z, fist +Z, palm -Y, thumb +X).
+# glove_colors: recolor its leather {'main': rgb for the black panels, 'accent': rgb for the gold}; None = as built.
+#   optional 'main_metal' / 'accent_metal' (0-1) set how metallic each panel is.
+# glove/cuff: colours for the old primitive gloves, used only when glove_model is absent.
 FIGHTERS = {
-    'kamarian': dict(glove=(0.62, 0.40, 0.03, 1), cuff=(0.03, 0.03, 0.035, 1), moves={}),
-    'lamar': dict(height=1.80, glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
+    # gold body (metallic) + black thumb: black gloves disappear against his navy hoodie at sprite size
+    'kamarian': dict(glove_model='gloves/fight_glove.glb',
+                     glove_colors={'main': (0.95, 0.68, 0.18), 'accent': (0.03, 0.03, 0.03), 'main_metal': 1.0, 'accent_metal': 0.0},
+                     glove=(0.62, 0.40, 0.03, 1), cuff=(0.03, 0.03, 0.035, 1), moves={}),
+    'lamar': dict(height=1.80, glove_model='gloves/fight_glove.glb',
+                  glove_colors={'main': (0.50, 0.025, 0.035), 'accent': (0.03, 0.03, 0.03)},
+                  glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
 }
 
 M = 'mixamorig:'
@@ -235,6 +244,69 @@ def add_gloves(arm, color, cuff, k):
     return mats_meshes()
 
 
+def recolor_glove(mat, colors):
+    """Swap the glove's black leather -> main and gold -> accent, keeping the leather's shading."""
+    img = next(n.image for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE' and
+               any(l.to_socket.name == 'Base Color' for l in n.outputs[0].links))
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(-1, 4)
+    rgb = px[:, :3]; mx = rgb.max(1); mn = rgb.min(1); sat = np.where(mx > 1e-4, (mx - mn) / np.maximum(mx, 1e-4), 0)
+    r, g, b = rgb[:, 0], rgb[:, 1], rgb[:, 2]
+    gold = (sat > 0.35) & (mx > 0.15) & (r >= g) & (g > b * 1.2)
+    black = (mx < 0.28) & ~gold
+    for mask, key in ((black, 'main'), (gold, 'accent')):
+        if not mask.any(): continue
+        v = mx[mask]; shade = np.clip(v / max(1e-4, float(np.median(v))), 0.35, 2.2)[:, None]
+        rgb[mask] = np.clip(np.array(colors[key], dtype=np.float32)[None, :] * shade, 0, 1)
+    px[:, :3] = rgb
+    new = img.copy(); new.pixels = px.ravel().tolist(); new.pack()
+    for n in mat.node_tree.nodes:
+        if n.type == 'TEX_IMAGE' and n.image == img: n.image = new
+    # metallic lives in the blue channel of the glTF metallic-roughness map (same UVs)
+    mr = next((n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE' and n.image != new and
+               any(l.to_socket.name == 'Color' for l in n.outputs[0].links)), None)
+    if mr is not None and ('main_metal' in colors or 'accent_metal' in colors) and tuple(mr.image.size) == tuple(img.size):
+        q = np.array(mr.image.pixels[:], dtype=np.float32).reshape(-1, 4)
+        if 'main_metal' in colors: q[black, 2] = colors['main_metal']
+        if 'accent_metal' in colors: q[gold, 2] = colors['accent_metal']
+        m2 = mr.image.copy(); m2.colorspace_settings.name = 'Non-Color'; m2.pixels = q.ravel().tolist(); m2.pack(); mr.image = m2
+    print('GLOVE recolor: black px', int(black.sum()), 'gold px', int(gold.sum()))
+
+
+def add_model_gloves(arm, meshes, spec, H):
+    """Attach the textured glove to each hand bone: fist along the bone, thumb toward the thumb
+    (or forward in an A-pose), left glove mirrored. The hand mesh inside is removed."""
+    bpy.ops.import_scene.gltf(filepath=os.path.join(HERE, spec['glove_model']))
+    src = bpy.context.selected_objects[0]
+    if spec.get('glove_colors'):
+        recolor_glove(src.data.materials[0], spec['glove_colors'])
+    vz = [v.co.z for v in src.data.vertices]; glen = max(vz) - min(vz)
+    k = H / 1.75; s_ = 0.31 * k / glen
+    wrist = Vector((0, 0, min(vz) + 0.62 * glen))        # wrist sits at the top of the taped cuff
+    for side in ('Left', 'Right'):
+        hb = arm.data.bones[M + side + 'Hand']; Bm = hb.matrix_local.to_3x3()
+        A = Vector((0, 1, 0))
+        tb = arm.data.bones.get(M + side + 'HandThumb1')
+        T = (Bm.inverted() @ (tb.head_local - hb.head_local)) if tb else (Bm.inverted() @ Vector((0, -1, 0)))
+        T = (T - A * T.dot(A)).normalized(); C = A.cross(T)
+        if side == 'Right': R = Matrix((T, C, A)).transposed(); S = Matrix.Diagonal((1, 1, 1))
+        else: R = Matrix((-T, -C, A)).transposed(); S = Matrix.Diagonal((-1, 1, 1))
+        L = R @ S * s_
+        o = src.copy(); o.data = src.data; bpy.context.scene.collection.objects.link(o)
+        o.parent = arm; o.parent_type = 'BONE'; o.parent_bone = M + side + 'Hand'
+        o.matrix_parent_inverse.identity()
+        o.matrix_basis = Matrix.Translation((0, -hb.length, 0)) @ Matrix.Translation(-(L @ wrist)) @ L.to_4x4()
+    bpy.data.objects.remove(src)
+    # the bare hand would poke through the glove: delete vertices that mostly follow a hand bone
+    import bmesh
+    for ob in meshes:
+        gi = {g.index for g in ob.vertex_groups if 'Hand' in g.name}
+        bm = bmesh.new(); bm.from_mesh(ob.data); dl = bm.verts.layers.deform.active
+        if dl is None: bm.free(); continue
+        kill = [v for v in bm.verts if sum(w for g, w in v[dl].items() if g in gi) > 0.5]
+        bmesh.ops.delete(bm, geom=kill, context='VERTS'); bm.to_mesh(ob.data); bm.free(); ob.data.update()
+        print('GLOVE removed hand verts:', len(kill))
+
+
 def mats_meshes():
     return [o for o in bpy.data.objects if o.type == 'MESH' and not o.hide_render]
 
@@ -275,8 +347,9 @@ def main():
     ref = clip('jab_cross')
     k_hip = head_w(arm, M + 'Hips', rest=True).z / ref.rest_head(M + 'Hips').z
     print('HEIGHT', round(H, 3))
-    add_gloves(arm, spec['glove'], spec['cuff'], H / 1.75)
-    meshes = mats_meshes()
+    if spec.get('glove_model'): add_model_gloves(arm, meshes, spec, H)
+    else: add_gloves(arm, spec['glove'], spec['cuff'], H / 1.75)
+    meshes = [o for o in mats_meshes() if o.parent_type != 'BONE']   # floor check: body only
 
     scene_util.light_rig()
     # 240 px/m like every fighter. Canvas grows with height so a raised glove (victory) fits:

@@ -42,6 +42,11 @@ mesh, builds a Mixamo-named skeleton and skins it, then everything below works t
 ~1.7 m render on a taller canvas so a raised glove fits; copy `anchorX/anchorY` from `anchor.json` into the
 roster entry as `anchor: [x, y]`.
 
+**Gloves** — `gloves/fight_glove.glb`: a textured lace-up fight glove built in Meshy (multi-image-to-3d, task
+`01a157a6-977a-77fe-955c-398fa258fba5`) from AI reference views, cut from 1.4M to 150k faces (lower than that
+breaks the texture seams). Set `glove_model` per fighter; `glove_colors` recolors its black panels (`main`) and
+gold panels (`accent`), with optional `main_metal` / `accent_metal`. The bare hand under the glove is removed.
+
 **New fighter = 4 steps**
 1. Add `FIGHTERS['<id>'] = dict(glove=..., cuff=..., moves={})`.
 2. `python3 render_mocap.py <id> path/to/model.glb out/<id>` (~3 min, 2 cores).

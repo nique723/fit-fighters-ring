@@ -38,6 +38,7 @@ export const CONFIG = {
     // Small, fast, deep gas tank. The cost: light shots, short reach, and every punch he
     // eats drains his stamina hard (chin 2), so getting hit is how you beat him.
     { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands · quick feet · big engine', mocap: true,
+      anchor: [0.4, 0.9733],
       stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8, guard: 5, experience: 5 } },
     // Guard never comes down (40% of head shots blocked), heavy hands, ring IQ. The cost: slow
     // feet, slow hands, short gas tank. Beat him with movement, body shots and uppercuts
