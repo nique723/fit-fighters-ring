@@ -1,5 +1,5 @@
 import { fighter } from './ratings.js';
-import { portrait } from './select.js';
+import { heroPic } from './select.js';
 
 /**
  * Ring walk-in: MAIN EVENT card slams both fighters in under camera flashes and a crowd roar,
@@ -18,7 +18,7 @@ export class RingIntro {
   play({ player, opponent }, onDone) {
     this.onDone = onDone;
     const P = fighter(player), O = fighter(opponent);
-    const side = (f, cls) => `<div class="in-side ${cls}"><div class="in-pic">${portrait(f)}</div>
+    const side = (f, cls) => `<div class="in-side ${cls}"><div class="in-pic">${heroPic(f, cls === 'r')}</div>
       <b>${f.name}</b><small>${feet(f.height)}${f.trait ? ' · ' + f.trait : ''}</small></div>`;
     this.el.innerHTML = `<div class="in-flashes"></div>
       <div class="in-head">Main event</div>

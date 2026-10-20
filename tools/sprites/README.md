@@ -47,6 +47,16 @@ roster entry as `anchor: [x, y]`.
 breaks the texture seams). Set `glove_model` per fighter; `glove_colors` recolors its black panels (`main`) and
 gold panels (`accent`), with optional `main_metal` / `accent_metal`. The bare hand under the glove is removed.
 
+**Hero portrait** (menus, Tale of the Tape, intro, tonight's card): full body, guard up, front three-quarter,
+ring lighting. Meshy files carry textures only, no picture, so this is rendered from the model:
+
+```bash
+python3 render_mocap.py <id> model.glb out/<id> --hero   # -> out/<id>/hero.png (720x1080, transparent)
+```
+
+Crop to the body (4% padding, 0.62 aspect), 800 px tall, WebP q86 -> `public/fighters/<id>/hero.webp`, and set
+`hero: true` on the roster entry.
+
 **New fighter = 4 steps**
 1. Add `FIGHTERS['<id>'] = dict(glove=..., cuff=..., moves={})`.
 2. `python3 render_mocap.py <id> path/to/model.glb out/<id>` (~3 min, 2 cores).

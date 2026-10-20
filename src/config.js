@@ -29,6 +29,7 @@ export const CONFIG = {
   // Fighters. Sprites live in public/fighters/<id>/. Order = the fighter picker's cycle order.
   // Pick on the page (FIGHTER button before the bell) or by URL: ?p=kamarian&o=o
   // stats: 8 ratings, 1-10 each, 5 = baseline. Totals must equal ratings.budget (console warns if not).
+  // hero: has fighters/<id>/hero.webp, a full-body portrait (render_mocap.py --hero) used on menus.
   // height: metres (card + portrait framing). canvas/anchor: only for sprites rendered on a taller
   //   canvas (render_mocap.py sizes it to the fighter); copy w/h and anchorX/Y from anchor.json.
   // ai: how this fighter fights as the opponent — punch preference multipliers on top of the
@@ -40,7 +41,7 @@ export const CONFIG = {
       stats: { handSpeed: 5, footwork: 5, power: 5, reach: 5, chin: 5, engine: 5, guard: 5, experience: 5 } },
     // Small, fast, deep gas tank. The cost: light shots, short reach, and every punch he
     // eats drains his stamina hard (chin 2), so getting hit is how you beat him.
-    { id: 'kamarian', name: 'KAMARIAN', trait: 'Fast hands · quick feet · big engine', mocap: true,
+    { id: 'kamarian', hero: true, name: 'KAMARIAN', trait: 'Fast hands · quick feet · big engine', mocap: true,
       height: 1.68, canvas: [480, 544], anchor: [0.4, 0.9733],
       stats: { handSpeed: 8, footwork: 7, power: 3, reach: 2, chin: 2, engine: 8, guard: 5, experience: 5 },
       // as the opponent: volume jabs and body work, keeps circling off the line
@@ -48,21 +49,21 @@ export const CONFIG = {
     // Guard never comes down (40% of head shots blocked), heavy hands, ring IQ. The cost: slow
     // feet, slow hands, short gas tank. Beat him with movement, body shots and uppercuts
     // (both go through the guard), and by making him work.
-    { id: 'lamar', name: 'LAMAR', trait: 'Guard always up · power · experience', mocap: true,
+    { id: 'lamar', hero: true, name: 'LAMAR', trait: 'Guard always up · power · experience', mocap: true,
       height: 1.80, canvas: [480, 576], anchor: [0.4, 0.9745],
       stats: { handSpeed: 2, footwork: 3, power: 8, reach: 4, chin: 3, engine: 4, guard: 9, experience: 7 },
       // as the opponent: walks you down behind the guard, sits in range for the cross and hook
       ai: { punches: { jab: 0.6, cross: 1.5, hook: 1.6, body: 0.9 }, circle: 0.4, range: -25 } },
     // Strong and built like it: heavy hands and a high guard. The cost: new to boxing (stays stunned
     // longer, small counter window, telegraphs his shots), slow feet. Make him miss and counter.
-    { id: 'joe', name: 'JOE', trait: 'Power · high guard · new to boxing', mocap: true,
+    { id: 'joe', hero: true, name: 'JOE', trait: 'Power · high guard · new to boxing', mocap: true,
       height: 1.78, canvas: [480, 576], anchor: [0.4, 0.9745],
       stats: { handSpeed: 4, footwork: 3, power: 8, reach: 5, chin: 6, engine: 4, guard: 8, experience: 2 },
       // as the opponent: loads up on hooks and right hands, comes forward, rarely jabs
       ai: { punches: { jab: 0.5, cross: 1.4, hook: 1.7, body: 1.0 }, circle: 0.6, range: -15 } },
     // Heavyweight: longest arms and heaviest hands on the roster. The cost: slow feet and hands,
     // a short gas tank. He wants you at the end of his jab; get inside and make him move.
-    { id: 'malachi', name: 'MALACHI', trait: 'Heavyweight · long reach · power', mocap: true,
+    { id: 'malachi', hero: true, name: 'MALACHI', trait: 'Heavyweight · long reach · power', mocap: true,
       height: 1.88, canvas: [480, 600], anchor: [0.4, 0.9753],
       stats: { handSpeed: 3, footwork: 2, power: 9, reach: 9, chin: 6, engine: 3, guard: 4, experience: 4 },
       // as the opponent: long jab and the right hand behind it, keeps you at range

@@ -13,6 +13,12 @@ export function portrait(f) {
     `top:${(-(top - 0.06 * ppm) * s).toFixed(1)}%;left:calc(50% - ${((ax * w + 18) * s / 100).toFixed(3)} * var(--ph))">`;
 }
 
+/** Full-body hero portrait when the fighter has one; the sprite crop otherwise. */
+export function heroPic(f, mirror = false) {
+  if (!f.hero) return portrait(f);
+  return `<img class="hero${mirror ? ' mirror' : ''}" alt="" src="fighters/${f.id}/hero.webp">`;
+}
+
 const feet = (m) => {
   if (!m) return '';
   const inches = Math.round(m / 0.0254);
@@ -70,12 +76,12 @@ export class FighterSelect {
     const big = (key, f, label) => `
       <button type="button" class="sl-big ${key} ${this.slot === key ? 'active' : ''}" data-act="slot" data-slot="${key}">
         <span class="sl-tag">${label}</span><span class="sl-spot"></span>
-        <div class="sl-bigpic">${portrait(f)}</div>
+        <div class="sl-bigpic">${heroPic(f, key === 'opponent')}</div>
         <b>${f.name}</b><small>${feet(f.height)}${f.trait ? ' · ' + f.trait : ''}</small></button>`;
     const cards = CONFIG.roster.map((f) => {
       const tag = this.pick.player === f.id ? 'you' : this.pick.opponent === f.id ? 'opp' : '';
       return `<button type="button" class="sl-card ${tag}" data-act="fighter" data-id="${f.id}">
-        <div class="sl-pic">${portrait(f)}</div><b>${f.name}</b>${tag ? `<i>${tag === 'you' ? 'YOU' : 'OPP'}</i>` : ''}</button>`;
+        <div class="sl-pic">${heroPic(f)}</div><b>${f.name}</b>${tag ? `<i>${tag === 'you' ? 'YOU' : 'OPP'}</i>` : ''}</button>`;
     }).join('');
     const rows = RATING_KEYS.map((k) => {
       const a = (P.stats || {})[k] ?? 5, b = (O.stats || {})[k] ?? 5;

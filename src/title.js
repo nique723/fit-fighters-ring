@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { portrait } from './select.js';
+import { heroPic } from './select.js';
 
 /**
  * Fight-night landing page.
@@ -69,8 +69,8 @@ export class TitleScreen {
     const items = card().map(([a, b], i) => {
       const A = CONFIG.roster.find((f) => f.id === a), B = CONFIG.roster.find((f) => f.id === b);
       return `<button type="button" class="tc-bout" data-act="bout" data-a="${a}" data-b="${b}">
-        ${i === 0 ? '<em>Main event</em>' : ''}<span class="tc-pic">${portrait(A)}</span>
-        <b>${A.name}</b><i>vs</i><b>${B.name}</b><span class="tc-pic">${portrait(B)}</span></button>`;
+        ${i === 0 ? '<em>Main event</em>' : ''}<span class="tc-pic">${heroPic(A)}</span>
+        <b>${A.name}</b><i>vs</i><b>${B.name}</b><span class="tc-pic">${heroPic(B, true)}</span></button>`;
     }).join('');
     // two copies so the marquee loops seamlessly
     this.el.querySelector('.tc-track').innerHTML = items + items;
