@@ -10,6 +10,7 @@ import { createStats } from './stats.js';
 import { CameraMode } from './camera.js';
 import { fighter, RATING_KEYS, RATING_LABELS, checkRoster } from './ratings.js';
 import { FighterSelect } from './select.js';
+import { TitleScreen } from './title.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
@@ -72,9 +73,12 @@ class ArenaScene extends Phaser.Scene {
     document.getElementById('fighter-pick').addEventListener('click', () => {
       if (!this.stats.running) this.select.open(this.fighters);   // no swapping mid-fight
     });
-    // a shared link with ?p=&o= goes straight to the ring; otherwise pick first
+    // a shared link with ?p=&o= goes straight to the ring; otherwise landing page -> pick -> ring
     const q = new URLSearchParams(window.location.search);
-    if (!(q.get('p') && q.get('o'))) this.select.open(this.fighters);
+    if (!(q.get('p') && q.get('o'))) {
+      this.title = new TitleScreen(() => this.select.open(this.fighters));
+      this.title.open();
+    }
     const fight = document.getElementById('fight-toggle');
     fight.addEventListener('click', () => {
       if (this.stats.running) this.combat.stop();
