@@ -93,6 +93,17 @@ export const CONFIG = {
   defaultPlayer: 'p',
   defaultOpponent: 'o',
 
+  // Punch impact visuals (src/hit-fx.js). star/ring: size; drops: sweat particles;
+  // ms: flash length; screen: full-frame white flash; flashMs: hit fighter flashes white this long.
+  fx: {
+    light: { star: 0.7, ring: 0, drops: 7, ms: 110, screen: 0, flashMs: 0 },
+    power: { star: 1.15, ring: 1, drops: 16, ms: 150, screen: 0, flashMs: 55 },
+    ko: { star: 1.8, ring: 1.4, drops: 34, ms: 200, screen: 0.35, flashMs: 120, hitstop: 240, zoomKick: 0.14 },
+    block: { star: 0.5, drops: 5, ms: 90 },
+    taken: 0.75,           // effects on the player are this much smaller (his shots are the show)
+    takenTint: 0xff8a80   // the player flashes red, not white, so getting tagged reads instantly
+  },
+
   // Broadcast camera (zoom 1 = whole arena visible).
   camera: {
     maxZoom: 1.45,
