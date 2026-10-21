@@ -68,3 +68,4 @@ Clips in use: lead_jab (jab), jab_cross (idle, cross), uppercut_jab (lead upperc
 dodging (slip, duck), light_hit_to_head / medium_hit_to_head_2 / head_hit_2 (head reactions by punch),
 hit_to_body / big_rib_hit (body; rib = body counter), stunned_2 + getting_up (knockdown), victory.
 Baked but unused: boxing, step_backward, right_pivot, left_pivot, taunt, standing, receive_stomach_uppercut.
+- Ring centre logo: `tex/emblem.html` (SVG, Graduate font, OFL) -> render to `tex/emblem.png` with headless Chromium at 2400px, downscale to 1160px and composite centred on `tex/canvas.png`, then re-run `arena.py`.
