@@ -116,7 +116,8 @@ class ArenaScene extends Phaser.Scene {
     this.camZoom = CONFIG.camera.maxZoom;
     this.camX = width / 2;
     this.camY = height / 2;
-    this.uiCam = this.cameras.add(0, 0, width, height);
+    const R = CONFIG.game.res;
+    this.uiCam = this.cameras.add(0, 0, width * R, height * R).setZoom(R).centerOn(width / 2, height / 2);
     const world = [this.arena, this.player.view.sprite, this.player.view.shadow,
       this.dummy.view.sprite, this.dummy.view.shadow, this.dummy.sparks, this.dust, this.bulbs];
     this.uiCam.ignore(world);
@@ -133,7 +134,7 @@ class ArenaScene extends Phaser.Scene {
     this.camY += ((a.y + b.y) / 2 - C.lookAbove - this.camY) * k;
     this.zoomKick *= Math.pow(0.82, dt / 16.7);
     const cam = this.cameras.main;
-    cam.setZoom(this.camZoom + this.zoomKick);
+    cam.setZoom((this.camZoom + this.zoomKick) * CONFIG.game.res);
     cam.centerOn(this.camX, this.camY);
   }
   /** 90s fight-night crowd: camera flashbulbs popping in the stands. Big shots set off a burst. */
@@ -222,8 +223,8 @@ checkRoster();
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game-root',
-  width: CONFIG.game.width,
-  height: CONFIG.game.height,
+  width: Math.round(CONFIG.game.width * CONFIG.game.res),
+  height: Math.round(CONFIG.game.height * CONFIG.game.res),
   backgroundColor: '#07090c',
   pixelArt: false,
   antialias: true,

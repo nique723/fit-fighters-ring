@@ -165,7 +165,8 @@ export class Combat {
       fontSize: type === 'jab' ? '28px' : '40px',
       color: counter ? '#f6e05e' : '#fff5f5',
       stroke: '#1a202c',
-      strokeThickness: 5
+      strokeThickness: 5,
+      resolution: CONFIG.game.res
     }).setOrigin(0.5, 1).setDepth(12);
     if (this.scene.uiCam) this.scene.uiCam.ignore(label);
     this.scene.tweens.add({
@@ -180,7 +181,8 @@ export class Combat {
   popText(who, text, color, height) {
     const lp = project(who.x, who.z, height);
     const label = this.scene.add.text(lp.x, lp.y, text, {
-      fontFamily: 'Impact, system-ui, sans-serif', fontSize: '26px', color, stroke: '#1a202c', strokeThickness: 5
+      fontFamily: 'Impact, system-ui, sans-serif', fontSize: '26px', color, stroke: '#1a202c', strokeThickness: 5,
+      resolution: CONFIG.game.res
     }).setOrigin(0.5, 1).setDepth(12);
     if (this.scene.uiCam) this.scene.uiCam.ignore(label);
     this.scene.tweens.add({ targets: label, y: lp.y - 30, alpha: 0, duration: 420, onComplete: () => label.destroy() });

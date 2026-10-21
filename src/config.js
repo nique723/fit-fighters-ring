@@ -2,8 +2,16 @@
  * Fit Fighters — all combat tunables live here.
  * Change numbers. Do not change logic files to feel out punches.
  */
+/**
+ * Backing-store scale: the world stays 960x540 logical units, but the canvas is drawn at the
+ * screen's real pixel count (capped at 2x = 1920x1080) so art isn't upscaled twice.
+ */
+const RES = typeof window === 'undefined' ? 1 : Math.min(2, Math.max(1,
+  Math.max(window.innerWidth / 960, window.innerHeight / 540) * (window.devicePixelRatio || 1)));
+
 export const CONFIG = {
   game: {
+    res: RES,
     width: 960,
     height: 540,
     background: 0x12161c
