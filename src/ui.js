@@ -90,6 +90,8 @@ export class UI {
 
     [this.pLabel, this.dLabel, this.pStBg, this.pSt, this.dHpBg, this.dHp, this.dStBg, this.dSt, this.brand, this.sub, this.scoreText]
       .forEach((o) => o.setDepth(20));
+    // text rasterises at backing-store resolution so it stays sharp under the zoomed cameras
+    this.objects().forEach((o) => o.setResolution && o.setResolution(CONFIG.game.res));
   }
 
   objects() {

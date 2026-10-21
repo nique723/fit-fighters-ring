@@ -13,6 +13,7 @@ import { FighterSelect } from './select.js';
 import { TitleScreen } from './title.js';
 import { RingIntro } from './intro.js';
 import { ArenaAudio } from './arena-audio.js';
+import { HitFx } from './hit-fx.js';
 
 class ArenaScene extends Phaser.Scene {
   constructor() { super('arena'); this.nowMs = 0; }
@@ -51,7 +52,6 @@ class ArenaScene extends Phaser.Scene {
     this.drawRing();
     this.player = new Player(this, CONFIG.player.startX, CONFIG.player.startZ);
     this.dummy = new Dummy(this, CONFIG.dummy.startX, CONFIG.dummy.startZ);
-    this.dust = this.add.graphics().setDepth(8);
     this.bulbs = this.add.graphics().setDepth(1).setBlendMode(Phaser.BlendModes.ADD);
     this.bulbMs = 0;
     this.audio = new AudioBus();
@@ -59,6 +59,7 @@ class ArenaScene extends Phaser.Scene {
     this.inputBus.attach();
     this.stats = createStats();
     this.ui = new UI(this);
+    this.fx = new HitFx(this);
     this.combat = new Combat(this, this.player, this.dummy, this.audio, this.stats, this.ui);
     this.cameraMode = new CameraMode(this.inputBus, this.stats);
     this.setupCameras();
@@ -116,11 +117,12 @@ class ArenaScene extends Phaser.Scene {
     this.camZoom = CONFIG.camera.maxZoom;
     this.camX = width / 2;
     this.camY = height / 2;
-    this.uiCam = this.cameras.add(0, 0, width, height);
+    const R = CONFIG.game.res;
+    this.uiCam = this.cameras.add(0, 0, width * R, height * R).setZoom(R).centerOn(width / 2, height / 2);
     const world = [this.arena, this.player.view.sprite, this.player.view.shadow,
-      this.dummy.view.sprite, this.dummy.view.shadow, this.dummy.sparks, this.dust, this.bulbs];
+      this.dummy.view.sprite, this.dummy.view.shadow, this.bulbs, ...this.fx.worldObjects()];
     this.uiCam.ignore(world);
-    cam.ignore(this.ui.objects());
+    cam.ignore([...this.ui.objects(), this.fx.flash]);
   }
   directCamera(dt) {
     const C = CONFIG.camera;
@@ -133,7 +135,7 @@ class ArenaScene extends Phaser.Scene {
     this.camY += ((a.y + b.y) / 2 - C.lookAbove - this.camY) * k;
     this.zoomKick *= Math.pow(0.82, dt / 16.7);
     const cam = this.cameras.main;
-    cam.setZoom(this.camZoom + this.zoomKick);
+    cam.setZoom((this.camZoom + this.zoomKick) * CONFIG.game.res);
     cam.centerOn(this.camX, this.camY);
   }
   /** 90s fight-night crowd: camera flashbulbs popping in the stands. Big shots set off a burst. */
@@ -152,20 +154,6 @@ class ArenaScene extends Phaser.Scene {
       g.fillStyle(0xffffff, 0.9); g.fillCircle(x, y, r);
     }
     this.bulbMs = burst ? 70 : 110 + Math.random() * 260;
-  }
-  puff(x, y, power, k = 1) {
-    const g = this.dust;
-    g.clear();
-    g.fillStyle(0xfff7e6, 0.95);
-    g.fillCircle(x, y, (power > 0.008 ? 16 : 9) * k);
-    g.fillStyle(0xf6ad55, 0.9);
-    const n = power > 0.008 ? 12 : 7;
-    for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n;
-      g.fillCircle(x + Math.cos(a) * (10 + i) * k, y + Math.sin(a) * 8 * k, (2 + (i % 3)) * k);
-    }
-    if (power > 0.008) this.flashBulbs(0, 6);
-    this.time.delayedCall(120, () => g.clear());
   }
   /** Button + fighter card follow the fight state (a fight can end on its own after 3 rounds). */
   syncFightUi() {
@@ -222,8 +210,8 @@ checkRoster();
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game-root',
-  width: CONFIG.game.width,
-  height: CONFIG.game.height,
+  width: Math.round(CONFIG.game.width * CONFIG.game.res),
+  height: Math.round(CONFIG.game.height * CONFIG.game.res),
   backgroundColor: '#07090c',
   pixelArt: false,
   antialias: true,

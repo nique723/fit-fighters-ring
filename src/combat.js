@@ -75,6 +75,8 @@ export class Combat {
       this.dummy.takeBlocked(spec.knockback * this.player.mods.power);
       this.hitstop(40);
       this.audio.slip();
+      const bp = this.contact(type === 'body' ? 1.05 : 1.5);
+      this.scene.fx.blocked(bp.x, bp.y, bp.k, this.player.facing);
       this.popText(this.dummy, 'BLOCKED', '#90cdf4', type === 'body' ? 1.2 : 1.7);
       return;
     }
@@ -95,9 +97,16 @@ export class Combat {
     this.dummy.flinch(type, spec.knockback * this.player.mods.power, counter);
     this.hitstop(spec.hitstop);
     this.shake(spec.shake);
-    const hp = project((this.player.x + this.dummy.x) / 2, this.dummy.z, type === 'body' ? 1.05 : 1.5);
-    this.scene.puff(hp.x, hp.y, spec.shake, hp.k);
+    const hp = this.contact(type === 'body' ? 1.05 : 1.5);
+    const tier = dead ? 'ko' : type === 'jab' && !counter ? 'light' : 'power';
+    this.scene.fx.hit(hp.x, hp.y, hp.k, this.player.facing, tier, { counter, body: type === 'body' });
+    this.dummy.view.flash(CONFIG.fx[tier].flashMs);
+    if (tier !== 'light') this.scene.flashBulbs(0, dead ? 12 : 6);
     this.impact(type, damage, counter);
+    if (dead) {
+      this.hitstop(CONFIG.fx.ko.hitstop);
+      this.scene.zoomKick = CONFIG.fx.ko.zoomKick;
+    }
     this.audio.punch(type);
 
     if (counter) {
@@ -142,6 +151,8 @@ export class Combat {
       this.stats.playerBlocks = (this.stats.playerBlocks || 0) + 1;
       this.player.takeBlocked(this.dummy.punchType, this.dummy.mods.power);
       this.audio.slip();
+      const bp = this.contact(1.5, this.player);
+      this.scene.fx.blocked(bp.x, bp.y, bp.k, this.dummy.facing);
       this.popText(this.player, 'BLOCKED', '#90cdf4', 1.7);
       return;
     }
@@ -153,7 +164,19 @@ export class Combat {
       this.hitstop(50);
       this.shake(0.003);
       this.audio.dummyHit();
+      const kind = this.dummy.punchType;
+      const tp = this.contact(kind === 'body' ? 1.05 : 1.5, this.player);
+      const tier = kind === 'jab' ? 'light' : 'power';
+      this.scene.fx.hit(tp.x, tp.y, tp.k * CONFIG.fx.taken, this.dummy.facing, tier, { body: kind === 'body' });
+      this.player.view.flash(CONFIG.fx.power.flashMs, CONFIG.fx.takenTint);
     }
+  }
+
+  /** Where the glove meets the target: most of the way from attacker to target, heightM up. */
+  contact(heightM, target = this.dummy) {
+    const from = target === this.dummy ? this.player : this.dummy;
+    const t = 0.72;
+    return project(from.x + (target.x - from.x) * t, from.z + (target.z - from.z) * t, heightM);
   }
 
   impact(type, damage, counter) {
@@ -165,7 +188,8 @@ export class Combat {
       fontSize: type === 'jab' ? '28px' : '40px',
       color: counter ? '#f6e05e' : '#fff5f5',
       stroke: '#1a202c',
-      strokeThickness: 5
+      strokeThickness: 5,
+      resolution: CONFIG.game.res
     }).setOrigin(0.5, 1).setDepth(12);
     if (this.scene.uiCam) this.scene.uiCam.ignore(label);
     this.scene.tweens.add({
@@ -180,7 +204,8 @@ export class Combat {
   popText(who, text, color, height) {
     const lp = project(who.x, who.z, height);
     const label = this.scene.add.text(lp.x, lp.y, text, {
-      fontFamily: 'Impact, system-ui, sans-serif', fontSize: '26px', color, stroke: '#1a202c', strokeThickness: 5
+      fontFamily: 'Impact, system-ui, sans-serif', fontSize: '26px', color, stroke: '#1a202c', strokeThickness: 5,
+      resolution: CONFIG.game.res
     }).setOrigin(0.5, 1).setDepth(12);
     if (this.scene.uiCam) this.scene.uiCam.ignore(label);
     this.scene.tweens.add({ targets: label, y: lp.y - 30, alpha: 0, duration: 420, onComplete: () => label.destroy() });

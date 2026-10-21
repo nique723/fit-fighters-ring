@@ -32,7 +32,6 @@ export class Dummy {
     this.hookOnly = false;
     this.view = new FighterView(scene, (scene.fighters?.opponent ?? 'o') + '-');
     this.setFighter(scene.fighters?.opponent ?? 'o');
-    this.sparks = scene.add.graphics().setDepth(9);
     this.paint();
   }
   setFighter(id) {
@@ -60,22 +59,7 @@ export class Dummy {
     this.flashTotal = CONFIG.feel.hitPoseMs * this.mods.stun;
     this.flashMs = this.flashTotal;
     this.hitKind = kind;
-    this.burst(kind);
     if (this.state !== 'idle') { this.state = 'idle'; this.phaseMs = 0; }
-  }
-  burst(kind) {
-    const g = this.sparks;
-    const head = this.view.sprite;
-    g.clear();
-    const n = kind === 'cross' || kind === 'upper' || kind === 'hook' ? 9 : 6;
-    const s = head.scaleX / 0.6;
-    const cx = head.x - this.facing * 30 * s;
-    const cy = head.y - (kind === 'body' ? 150 : 225) * s;
-    g.fillStyle(kind === 'body' ? 0xf6ad55 : 0xf7fafc, 0.95);
-    for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n;
-      g.fillCircle(cx + Math.cos(a) * (14 + i * 2) * s, cy + Math.sin(a) * 10 * s, (2 + (i % 2)) * s);
-    }
   }
   knockDown() { this.downMs = CONFIG.feel.knockdownMs; this.state = 'idle'; this.knockbackVel = 0; }
   nextStyle() {
@@ -100,7 +84,6 @@ export class Dummy {
       this.x = this.homeX; this.z = this.homeZ;
     }
     this.resetMs = CONFIG.feel.dummyResetHold;
-    this.sparks.clear();
   }
   takeHit(damage, staminaDrain = 0) {
     this.health = Math.max(0, this.health - damage);
@@ -156,7 +139,6 @@ export class Dummy {
     }
     if (this.downMs > 0) this.downMs -= delta;
     if (this.flashMs > 0) this.flashMs -= delta;
-    else this.sparks.clear();
     // knockback pushes away from the player
     this.x += -this.facing * this.knockbackVel;
     this.knockbackVel *= 0.82;

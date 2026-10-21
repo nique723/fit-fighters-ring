@@ -60,7 +60,17 @@ export class FighterView {
     return p;
   }
 
-  tint(color) { this.sprite.setTint(color); }
+  /** Solid-colour flash on a clean hit; tint() keeps it on until it runs out. */
+  flash(ms, color = 0xffffff) {
+    if (!ms) return;
+    this.flashUntil = this.scene.nowMs + ms;
+    this.flashColor = color;
+  }
+
+  tint(color) {
+    if (this.scene.nowMs < (this.flashUntil || 0)) this.sprite.setTintFill(this.flashColor);
+    else this.sprite.setTint(color);
+  }
 }
 
 const FALLBACK = {

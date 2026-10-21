@@ -8,7 +8,7 @@ python3 make_tex.py             # banners, canvas logo, apron → tex/
 python3 render_sprites.py crimson path/to/Crimson_Guard.fbx out/crimson
 python3 render_sprites.py white   path/to/White_Lightning.fbx out/white
 python3 render_mocap.py kamarian path/to/Kamarian.glb path/to/anims/ out/kamarian   # Meshy-rigged GLB + Mixamo FBX clips
-RW=1440 SAMPLES=24 HAZE=0.016 FSTOP=1.2 OUT=arena.png python3 arena.py
+RW=1920 SAMPLES=32 HAZE=0.016 FSTOP=1.2 OUT=arena.png python3 arena.py
 ```
 
 - `rig.py` — finds joints by slicing the mesh, builds a skeleton, heat-weights it (voxel proxy fallback). Per-model joint guesses live in `SPEC`; a new character needs one entry. `add_gloves()` puts gloves on a gloveless model.
