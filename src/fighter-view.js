@@ -60,16 +60,13 @@ export class FighterView {
     return p;
   }
 
-  /** Solid-colour flash on a clean hit; tint() keeps it on until it runs out. */
-  flash(ms, color = 0xffffff) {
-    if (!ms) return;
-    this.flashUntil = this.scene.nowMs + ms;
-    this.flashColor = color;
+  /** Soft hurt tint on a clean hit; tint() keeps it on until it runs out. */
+  hurt(ms) {
+    if (ms) this.hurtUntil = this.scene.nowMs + ms;
   }
 
   tint(color) {
-    if (this.scene.nowMs < (this.flashUntil || 0)) this.sprite.setTintFill(this.flashColor);
-    else this.sprite.setTint(color);
+    this.sprite.setTint(this.scene.nowMs < (this.hurtUntil || 0) ? CONFIG.fx.hurtTint : color);
   }
 }
 

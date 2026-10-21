@@ -94,18 +94,22 @@ export const CONFIG = {
   defaultOpponent: 'o',
 
   // Punch impact visuals (src/hit-fx.js). star/ring: size; drops: sweat particles;
-  // ms: flash length; screen: full-frame white flash; flashMs: hit fighter flashes white this long.
+  // ms: burst length; hurtMs: hit fighter takes a soft red tint this long.
+  // Photosensitivity: no screen shake, no full-frame or full-body white flashes, no strobing.
   fx: {
-    light: { star: 0.7, ring: 0, drops: 7, ms: 110, screen: 0, flashMs: 0 },
-    power: { star: 1.15, ring: 1, drops: 16, ms: 150, screen: 0, flashMs: 55 },
-    ko: { star: 1.8, ring: 1.4, drops: 34, ms: 200, screen: 0.35, flashMs: 120, hitstop: 240, zoomKick: 0.14 },
-    block: { star: 0.5, drops: 5, ms: 90 },
+    light: { star: 0.6, ring: 0, drops: 6, ms: 110, hurtMs: 90 },
+    power: { star: 0.9, ring: 0, drops: 12, ms: 140, hurtMs: 140 },
+    ko: { star: 1.2, ring: 0.8, drops: 22, ms: 180, hurtMs: 260, hitstop: 240 },
+    block: { star: 0.45, drops: 4, ms: 90 },
     taken: 0.75,           // effects on the player are this much smaller (his shots are the show)
-    takenTint: 0xff8a80   // the player flashes red, not white, so getting tagged reads instantly
+    hurtTint: 0xffe4e0     // a tint only darkens, so this reads as "hurt" without a bright flash
   },
 
-  // Broadcast camera (zoom 1 = whole arena visible).
+  // Broadcast camera (zoom 1 = whole arena visible). fixed: hold one steady shot of the whole ring;
+  // false = track and zoom on the fighters.
   camera: {
+    fixed: true,
+    fixedZoom: 1.05,
     maxZoom: 1.45,
     minZoom: 1.08,
     closeDist: 230,   // screen px between fighters before the camera starts pulling out
@@ -181,8 +185,7 @@ export const CONFIG = {
       damage: 3,
       staminaCost: 5,
       hitstop: 60,
-      knockback: 10,
-      shake: 0.004
+      knockback: 10
     },
     cross: {
       startup: 200,
@@ -192,8 +195,7 @@ export const CONFIG = {
       damage: 8,
       staminaCost: 15,
       hitstop: 110,
-      knockback: 25,
-      shake: 0.011
+      knockback: 25
     },
     body: {
       startup: 180,
@@ -205,8 +207,7 @@ export const CONFIG = {
       staminaDrain: 12,
       hitstop: 90,
       knockback: 8,
-      bend: 0.28,
-      shake: 0.007
+      bend: 0.28
     },
     // Lead hook: the round punch. Short reach, but it sweeps a lane twice as wide,
     // so it catches an opponent who has stepped off the line. Duck under it.
@@ -219,8 +220,7 @@ export const CONFIG = {
       damage: 8,
       staminaCost: 14,
       hitstop: 105,
-      knockback: 16,
-      shake: 0.011
+      knockback: 16
     },
     upper: {
       startup: 170,
@@ -231,8 +231,7 @@ export const CONFIG = {
       staminaCost: 14,
       hitstop: 100,
       knockback: 14,
-      bend: -0.2,
-      shake: 0.012
+      bend: -0.2
     }
   },
 

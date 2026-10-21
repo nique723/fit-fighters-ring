@@ -2,8 +2,8 @@ import { CONFIG } from './config.js';
 
 /**
  * Punch impact visuals. Combat decides what landed; this only draws it.
- * Tiers come from CONFIG.fx: a jab pops, a power shot flashes and sprays,
- * a knockdown blows the frame out. Particles keep flying through hitstop.
+ * Tiers come from CONFIG.fx: a jab pops, a power shot sprays harder, a knockdown adds a
+ * dim floor ring. Nothing flashes the whole frame. Particles keep flying through hitstop.
  */
 export class HitFx {
   constructor(scene) {
@@ -25,11 +25,9 @@ export class HitFx {
     this.sweat = pair([0xffffff, 0xdff3ff, 0xbfe3ff], Phaser.BlendModes.NORMAL, 40);
     this.sparks = pair([0xfff3c4, 0xffd27a, 0xffffff], Phaser.BlendModes.ADD, 65);
     this.objects = [this.sweat[1], this.sweat[-1], this.sparks[1], this.sparks[-1]];
-    this.flash = scene.add.rectangle(0, 0, CONFIG.game.width, CONFIG.game.height, 0xffffff, 0)
-      .setOrigin(0).setDepth(30).setBlendMode(Phaser.BlendModes.ADD);
   }
 
-  /** Everything the HUD camera must not draw (the full-frame flash is HUD-only). */
+  /** Everything the HUD camera must not draw. */
   worldObjects() { return this.objects; }
 
   /**
@@ -40,10 +38,8 @@ export class HitFx {
     const T = CONFIG.fx[tier];
     const star = this.burst(x, y, k * T.star, counter ? 0xffe27a : body ? 0xffe0b8 : 0xffffff, T.ms);
     if (T.ring) this.ring(x, y + 6 * k, k * T.ring, T.ms * 2.2);
-    if (tier === 'ko') this.ring(x, y + 6 * k, k * T.ring * 1.6, T.ms * 3.2);
     this.spray(this.sweat, x, y, dir, T.drops);
     if (counter || tier !== 'light') this.spray(this.sparks, x, y, dir, Math.round(T.drops * 0.5));
-    if (T.screen) this.screenFlash(T.screen, T.ms * 2.5);
     return star;
   }
 
@@ -56,7 +52,7 @@ export class HitFx {
   burst(x, y, size, tint, ms) {
     const s = this.scene;
     const glow = s.add.image(x, y, 'fx-glow').setDepth(10).setBlendMode(Phaser.BlendModes.ADD)
-      .setTint(tint).setScale(size * 0.25).setAlpha(0.45);
+      .setTint(tint).setScale(size * 0.25).setAlpha(0.3);
     const star = s.add.image(x, y, 'fx-star').setDepth(10).setBlendMode(Phaser.BlendModes.ADD)
       .setTint(tint).setScale(size * 0.2).setRotation(Math.random() * Math.PI);
     this.track(glow, star);
@@ -69,7 +65,7 @@ export class HitFx {
   ring(x, y, size, ms) {
     const s = this.scene;
     const r = s.add.image(x, y, 'fx-ring').setDepth(10).setBlendMode(Phaser.BlendModes.ADD)
-      .setScale(size * 0.1, size * 0.1).setAlpha(0.8);
+      .setScale(size * 0.1, size * 0.1).setAlpha(0.35);
     this.track(r);
     s.tweens.add({ targets: r, scaleX: size * 0.9, scaleY: size * 0.9, alpha: 0, duration: ms, ease: 'Cubic.Out',
       onComplete: () => this.drop(r) });
@@ -78,12 +74,6 @@ export class HitFx {
   /** Spray flies away from the punch: dir is the attacker's facing. */
   spray(pair, x, y, dir, count) {
     if (count) pair[dir > 0 ? 1 : -1].explode(count, x, y);
-  }
-
-  screenFlash(alpha, ms) {
-    this.scene.tweens.killTweensOf(this.flash);
-    this.flash.setAlpha(alpha);
-    this.scene.tweens.add({ targets: this.flash, alpha: 0, duration: ms, ease: 'Quad.Out' });
   }
 
   /** Short-lived images: keep them off the HUD camera, and drop them from the list after. */
