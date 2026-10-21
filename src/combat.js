@@ -3,7 +3,7 @@ import { project } from './stage.js';
 import { zeroPunches, sumPunches } from './stats.js';
 
 /**
- * Resolves punches, slips, hitstop, shake, counters.
+ * Resolves punches, slips, hitstop, counters.
  * Scene owns time. Combat only decides what happened.
  */
 export class Combat {
@@ -23,10 +23,6 @@ export class Combat {
 
   hitstop(ms) {
     this.frozenMs = Math.max(this.frozenMs, ms);
-  }
-
-  shake(intensity) {
-    this.scene.cameras.main.shake(intensity > 0.01 ? 220 : 150, intensity * 1.6);
   }
 
   /** Fighters can't walk through each other in the same lane; off-lane they can pass. */
@@ -96,17 +92,12 @@ export class Combat {
 
     this.dummy.flinch(type, spec.knockback * this.player.mods.power, counter);
     this.hitstop(spec.hitstop);
-    this.shake(spec.shake);
     const hp = this.contact(type === 'body' ? 1.05 : 1.5);
     const tier = dead ? 'ko' : type === 'jab' && !counter ? 'light' : 'power';
     this.scene.fx.hit(hp.x, hp.y, hp.k, this.player.facing, tier, { counter, body: type === 'body' });
-    this.dummy.view.flash(CONFIG.fx[tier].flashMs);
-    if (tier !== 'light') this.scene.flashBulbs(0, dead ? 12 : 6);
+    this.dummy.view.hurt(CONFIG.fx[tier].hurtMs);
     this.impact(type, damage, counter);
-    if (dead) {
-      this.hitstop(CONFIG.fx.ko.hitstop);
-      this.scene.zoomKick = CONFIG.fx.ko.zoomKick;
-    }
+    if (dead) this.hitstop(CONFIG.fx.ko.hitstop);
     this.audio.punch(type);
 
     if (counter) {
@@ -162,13 +153,12 @@ export class Combat {
       this.stats.points = Math.max(0, this.stats.points + CONFIG.score.points.hit);
       this.player.takeDummyHit(this.dummy.punchType, this.dummy.mods.power);
       this.hitstop(50);
-      this.shake(0.003);
       this.audio.dummyHit();
       const kind = this.dummy.punchType;
       const tp = this.contact(kind === 'body' ? 1.05 : 1.5, this.player);
       const tier = kind === 'jab' ? 'light' : 'power';
       this.scene.fx.hit(tp.x, tp.y, tp.k * CONFIG.fx.taken, this.dummy.facing, tier, { body: kind === 'body' });
-      this.player.view.flash(CONFIG.fx.power.flashMs, CONFIG.fx.takenTint);
+      this.player.view.hurt(CONFIG.fx[tier].hurtMs);
     }
   }
 
@@ -180,7 +170,6 @@ export class Combat {
   }
 
   impact(type, damage, counter) {
-    this.scene.zoomKick = type === 'cross' || type === 'upper' || type === 'hook' ? 0.07 : 0.035;
     const lp = project(this.dummy.x, this.dummy.z, type === 'body' ? 1.2 : 1.85);
     const y = lp.y;
     const label = this.scene.add.text(lp.x, y, (counter ? 'COUNTER ' : '') + damage, {

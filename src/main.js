@@ -106,14 +106,13 @@ class ArenaScene extends Phaser.Scene {
     this.arena = this.add.image(width / 2, height / 2, 'arena').setDisplaySize(width, height).setDepth(0);
   }
   /**
-   * Broadcast camera: world camera zooms in and tracks the fighters (tighter when close,
-   * wider when they separate). HUD gets its own unzoomed camera.
+   * World camera: one steady shot of the ring (CONFIG.camera.fixed), or a broadcast camera that
+   * zooms in and tracks the fighters. HUD gets its own unzoomed camera.
    */
   setupCameras() {
     const { width, height } = CONFIG.game;
     const cam = this.cameras.main;
     cam.setBounds(0, 0, width, height);
-    this.zoomKick = 0;
     this.camZoom = CONFIG.camera.maxZoom;
     this.camX = width / 2;
     this.camY = height / 2;
@@ -122,10 +121,17 @@ class ArenaScene extends Phaser.Scene {
     const world = [this.arena, this.player.view.sprite, this.player.view.shadow,
       this.dummy.view.sprite, this.dummy.view.shadow, this.bulbs, ...this.fx.worldObjects()];
     this.uiCam.ignore(world);
-    cam.ignore([...this.ui.objects(), this.fx.flash]);
+    cam.ignore(this.ui.objects());
   }
   directCamera(dt) {
     const C = CONFIG.camera;
+    const cam = this.cameras.main;
+    if (C.fixed) {
+      // bounds clamp this to the bottom of the arena: crowd up top, the whole canvas in shot
+      cam.setZoom(C.fixedZoom * CONFIG.game.res);
+      cam.centerOn(CONFIG.game.width / 2, CONFIG.game.height);
+      return;
+    }
     const a = this.player.view.shadow, b = this.dummy.view.shadow;
     const dist = Math.abs(a.x - b.x) + Math.abs(a.y - b.y) * 2;
     const want = Phaser.Math.Clamp(C.maxZoom - Math.max(0, dist - C.closeDist) / C.zoomOutPer, C.minZoom, C.maxZoom);
@@ -133,9 +139,7 @@ class ArenaScene extends Phaser.Scene {
     this.camZoom += (want - this.camZoom) * k;
     this.camX += ((a.x + b.x) / 2 - this.camX) * k;
     this.camY += ((a.y + b.y) / 2 - C.lookAbove - this.camY) * k;
-    this.zoomKick *= Math.pow(0.82, dt / 16.7);
-    const cam = this.cameras.main;
-    cam.setZoom((this.camZoom + this.zoomKick) * CONFIG.game.res);
+    cam.setZoom(this.camZoom * CONFIG.game.res);
     cam.centerOn(this.camX, this.camY);
   }
   /** 90s fight-night crowd: camera flashbulbs popping in the stands. Big shots set off a burst. */
