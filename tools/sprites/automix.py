@@ -42,6 +42,18 @@ def fit_height(ob, H):
     for x in ob.data.vertices:
         c = x.co; x.co = Vector(((c.x - cx) * k, (c.y - cy) * k, (c.z - z0) * k))
     ob.data.update()
+    weld_seams(ob)
+
+
+def weld_seams(ob, dist=1e-4):
+    """glTF import splits vertices along UV seams. Skinned separately, the two sides of a seam get
+    different weights and tear open once posed (dark cracks across clothes). Weld them; UVs live on
+    face corners, so the texture is unchanged."""
+    import bmesh
+    bm = bmesh.new(); bm.from_mesh(ob.data); n = len(bm.verts)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=dist)
+    print('AUTORIG welded seam verts:', n - len(bm.verts))
+    bm.to_mesh(ob.data); bm.free(); ob.data.update()
 
 
 def joints(ob, H):

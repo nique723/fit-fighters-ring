@@ -38,7 +38,8 @@ python3 render_mocap.py kamarian fighter.glb out/probe --probe hook 13,19,25,31,
 ```
 
 **Unrigged Meshy model?** Set `height` (m) in `FIGHTERS[<id>]`; `automix.py` measures the joints from the
-mesh, builds a Mixamo-named skeleton and skins it, then everything below works the same. Fighters taller than
+mesh, welds the UV-seam vertices glTF import splits (otherwise clothes tear open when posed), builds a
+Mixamo-named skeleton and skins it, then everything below works the same. Fighters taller than
 ~1.7 m render on a taller canvas so a raised glove fits; copy `anchorX/anchorY` from `anchor.json` into the
 roster entry as `anchor: [x, y]`.
 

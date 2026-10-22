@@ -75,7 +75,14 @@ export const CONFIG = {
       height: 1.88, canvas: [480, 600], anchor: [0.4, 0.9753],
       stats: { handSpeed: 3, footwork: 2, power: 9, reach: 9, chin: 6, engine: 3, guard: 4, experience: 4 },
       // as the opponent: long jab and the right hand behind it, keeps you at range
-      ai: { punches: { jab: 1.5, cross: 1.4, hook: 0.7, body: 0.8 }, circle: 0.5, range: 20 } }
+      ai: { punches: { jab: 1.5, cross: 1.4, hook: 0.7, body: 0.8 }, circle: 0.5, range: 20 } },
+    // Fastest hands on the roster, sharp feet, good gas, 5 years in. The cost: his hands drop
+    // (fewest head shots blocked), light power and a light chin. Make him pay when he steps in.
+    { id: 'kd', hero: true, name: 'KD SYKES', trait: 'Fastest hands · footwork · engine', mocap: true,
+      height: 1.75, canvas: [480, 560], anchor: [0.4, 0.9739],
+      stats: { handSpeed: 10, footwork: 8, power: 3, reach: 3, chin: 2, engine: 7, guard: 1, experience: 6 },
+      // as the opponent: in-and-out combos, quick one-twos, stays moving
+      ai: { punches: { jab: 1.4, cross: 1.4, hook: 0.9, body: 0.8 }, circle: 1.4, range: 5 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {

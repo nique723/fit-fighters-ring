@@ -85,6 +85,10 @@ FIGHTERS = {
     'joe': dict(height=1.78, glove_model='gloves/fight_glove.glb',
                 glove_colors={'main': (0.04, 0.40, 0.17), 'accent': (0.85, 0.62, 0.16), 'main_metal': 0.0, 'accent_metal': 1.0},
                 glove=(0.05, 0.4, 0.17, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
+    # orange body + gold thumb: pops against his navy tee and dark pants, echoes the gold shirt print
+    'kd': dict(height=1.75, glove_model='gloves/fight_glove.glb',
+               glove_colors={'main': (0.92, 0.36, 0.05), 'accent': (0.85, 0.62, 0.16), 'main_metal': 0.0, 'accent_metal': 1.0},
+               glove=(0.92, 0.36, 0.05, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
     'lamar': dict(height=1.80, glove_model='gloves/fight_glove.glb',
                   glove_colors={'main': (0.50, 0.025, 0.035), 'accent': (0.03, 0.03, 0.03)},
                   glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
