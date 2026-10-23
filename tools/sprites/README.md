@@ -43,6 +43,16 @@ Mixamo-named skeleton and skins it, then everything below works the same. Fighte
 ~1.7 m render on a taller canvas so a raised glove fits; copy `anchorX/anchorY` from `anchor.json` into the
 roster entry as `anchor: [x, y]`.
 
+**Photos shot arms-down?** `automix.py` can't find arms that hang against the body. Rig the model in Meshy
+instead (`meshy rigging create --input-task-id <remeshed task> --height-meters <h>`) and pass the rigged GLB.
+`load_target` bakes Meshy's 0.01 armature scale (without it every posed bone renders 100x and the frame
+comes out empty) and renames its 24 bones to `mixamorig:*` (`MESHY_BONES`), so the move library retargets onto it.
+Then `fix_hand_weights` cleans up the skinning: with the hands resting on the hips, Meshy gives hip/shirt
+vertices some hand weight, and they stretch into strands from glove to waist once the guard comes up. Hand/
+forearm weight is stripped from vertices more than 7 cm from the elbow-to-fingertip line; vertices that were
+all hand (stray finger bits) are deleted. Known limit: an arms-down mesh joins arm and torso at the armpit,
+so loose shirts web a little on extended punches. A Meshy A-pose build avoids it. Used by LJ and Jersey.
+
 **Gloves** — `gloves/fight_glove.glb`: a textured lace-up fight glove built in Meshy (multi-image-to-3d, task
 `01a157a6-977a-77fe-955c-398fa258fba5`) from AI reference views, cut from 1.4M to 150k faces (lower than that
 breaks the texture seams). Set `glove_model` per fighter; `glove_colors` recolors its black panels (`main`) and

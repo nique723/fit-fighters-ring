@@ -26,18 +26,29 @@ const CONTROLS = [
   ['Body shot', 'L', 'BODY'], ['Uppercut', 'U', 'UPPER'], ['Slip', 'Space', 'SLIP'], ['Duck', 'I / Shift', 'DUCK']
 ];
 
-/** Matchups for tonight's card: every pair of mocap fighters, spread so nobody fights back to back. */
+/**
+ * Matchups for tonight's card (8 bouts) from every pair of mocap fighters: every fighter gets on the
+ * card (fewest bouts so far first, so new roster additions show up), and nobody fights back to back.
+ */
 function card() {
   const ids = CONFIG.roster.filter((f) => f.mocap).map((f) => f.id);
   const pairs = [];
   for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) pairs.push([ids[i], ids[j]]);
+  const bouts = Object.fromEntries(ids.map((id) => [id, 0]));
   const out = [];
-  while (pairs.length) {
+  while (pairs.length && out.length < 8) {
     const last = out[out.length - 1] || [];
-    const k = pairs.findIndex((p) => !p.includes(last[0]) && !p.includes(last[1]));
-    out.push(pairs.splice(k < 0 ? 0 : k, 1)[0]);
+    let best = 0, bestScore = -Infinity;
+    pairs.forEach(([a, b], k) => {
+      const rest = !last.includes(a) && !last.includes(b);
+      const score = (rest ? 100 : 0) - 10 * (bouts[a] + bouts[b]) - Math.max(bouts[a], bouts[b]);
+      if (score > bestScore) { bestScore = score; best = k; }
+    });
+    const [a, b] = pairs.splice(best, 1)[0];
+    bouts[a]++; bouts[b]++;
+    out.push([a, b]);
   }
-  return out.slice(0, 8);
+  return out;
 }
 
 export class TitleScreen {

@@ -92,6 +92,17 @@ FIGHTERS = {
     'lamar': dict(height=1.80, glove_model='gloves/fight_glove.glb',
                   glove_colors={'main': (0.50, 0.025, 0.035), 'accent': (0.03, 0.03, 0.03)},
                   glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
+    # teal body + metallic gold thumb: matches his mint boxing shoes and the gold logo on his gray tank.
+    # Meshy-rigged (arms-down photos): pass the rigged GLB; height is only a note here.
+    'lj': dict(height=1.83, glove_model='gloves/fight_glove.glb',
+               glove_colors={'main': (0.05, 0.50, 0.46), 'accent': (0.85, 0.62, 0.16), 'main_metal': 0.0, 'accent_metal': 1.0},
+               glove=(0.05, 0.50, 0.46, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
+    # black body + metallic red thumb: pops against his white tee, echoes the red/black shirt logo.
+    # Meshy-rigged (arms-down photos); hand_drop 0.6: his hands rested on his jogger pockets, so more
+    # finger bits are fused to the pants than LJ's (default 0.95 left a fragment at the right hip)
+    'jersey': dict(height=1.83, hand_drop=0.6, glove_model='gloves/fight_glove.glb',
+                   glove_colors={'main': (0.03, 0.03, 0.035), 'accent': (0.78, 0.05, 0.06), 'main_metal': 0.0, 'accent_metal': 1.0},
+                   glove=(0.03, 0.03, 0.035, 1), cuff=(0.78, 0.05, 0.06, 1), moves={}),
 }
 
 M = 'mixamorig:'
@@ -176,14 +187,97 @@ def set_world_rot(arm, name, R3, loc=None):
     bpy.context.view_layer.update()
 
 
-def load_target(glb, height=None, name='fighter'):
+# Meshy's own rigging (2026 rig: 24 bones, no fingers) -> Mixamo names. Its spine counts down from
+# the hips (Spine02 is lowest). Use this rig when the photos were shot arms-down: automix needs a
+# wide A-pose to find the arms. Renaming a bone renames its vertex group too, so skinning holds.
+MESHY_BONES = {'Hips': 'Hips', 'Spine02': 'Spine', 'Spine01': 'Spine1', 'Spine': 'Spine2', 'neck': 'Neck',
+               'Head': 'Head', 'head_end': 'HeadTop_End'}
+for _s in ('Left', 'Right'):
+    MESHY_BONES.update({f'{_s}{b}': f'{_s}{b}' for b in
+                        ('Shoulder', 'Arm', 'ForeArm', 'Hand', 'UpLeg', 'Leg', 'Foot', 'ToeBase')})
+
+
+def mixamo_names(arm):
+    """Rename a Meshy-rigged armature's bones to mixamorig:* so the move library finds them."""
+    if any(b.name.startswith(M) for b in arm.data.bones): return
+    n = 0
+    for b in list(arm.data.bones):
+        if b.name in MESHY_BONES: b.name = M + MESHY_BONES[b.name]; n += 1
+    print('MESHY rig renamed bones:', n)
+
+
+def fix_hand_weights(arm, meshes, radius=0.07, reach=0.22, drop_at=0.95):
+    """An arms-down Meshy mesh is skinned with the hands resting on the hips, so some hip/shirt
+    vertices get forearm/hand weight. Once the guard comes up they follow the glove and stretch into
+    strands. Strip forearm/hand weight from any vertex farther than `radius` (m) from that arm's
+    elbow-to-fingertip segment, and give it back to the bones it already had (or the nearest body bone).
+    Meshy's hand bone is short, so the segment runs from the elbow through the wrist and on `reach` m
+    along the forearm line to cover the fingers. Vertices whose weight is at least `drop_at` stray hand
+    are deleted (finger bits fused to the hip or a pocket); FIGHTERS[id]['hand_drop'] overrides it."""
+    from mathutils.geometry import intersect_point_line
+    mw = arm.matrix_world
+    segs = {}
+    for s_ in ('Left', 'Right'):
+        fa = arm.data.bones[M + s_ + 'ForeArm']; hb = arm.data.bones[M + s_ + 'Hand']
+        elbow, wrist = mw @ fa.head_local, mw @ hb.head_local
+        segs[s_] = (elbow, wrist + (wrist - elbow).normalized() * reach)
+    body = [b for b in arm.data.bones if not any(k in b.name for k in ('Arm', 'Hand', 'Shoulder'))]
+    for ob in meshes:
+        vg = ob.vertex_groups; names = {g.index: g.name for g in vg}
+        limb = {g.index: s_ for g in vg for s_ in ('Left', 'Right')
+                if g.name in (M + s_ + 'ForeArm', M + s_ + 'Hand')}
+        fixed, drop = 0, []
+        for v in ob.data.vertices:
+            hits = [(g.group, g.weight) for g in v.groups if g.group in limb and g.weight > 0]
+            if not hits: continue
+            p = ob.matrix_world @ v.co
+            far = []
+            for gi, w in hits:
+                a_, b_ = segs[limb[gi]]
+                q, t = intersect_point_line(p, a_, b_)
+                q = a_ if t < 0 else b_ if t > 1 else q
+                if (p - q).length > radius: far.append((gi, w))
+            if not far: continue
+            total = sum(g.weight for g in v.groups) or 1.0
+            if sum(w for _, w in far) / total >= drop_at:
+                drop.append(v.index)   # all hand: a stray finger/palm bit (the glove replaces the hand)
+                continue
+            for gi, _ in far: vg[gi].remove([v.index])
+            rest = [g for g in v.groups if g.weight > 0]
+            if not rest:   # nothing left: hand it to the nearest body bone
+                nb = min(body, key=lambda bb: (p - mw @ ((bb.head_local + bb.tail_local) / 2)).length)
+                g = vg.get(nb.name) or vg.new(name=nb.name)
+                g.add([v.index], 1.0, 'REPLACE')
+            fixed += 1
+        if drop:
+            import bmesh
+            bm = bmesh.new(); bm.from_mesh(ob.data); bm.verts.ensure_lookup_table()
+            bmesh.ops.delete(bm, geom=[bm.verts[i] for i in drop], context='VERTS')
+            bm.to_mesh(ob.data); bm.free(); ob.data.update()
+        print('MESHY rig dropped stray hand verts:', len(drop))
+        print('MESHY rig stripped stray hand/forearm weight from verts:', fixed)
+
+
+def load_target(glb, height=None, name='fighter', hand_drop=0.95):
     bpy.ops.import_scene.gltf(filepath=glb)
-    if not [o for o in bpy.data.objects if o.type == 'ARMATURE']:
+    rigged = bool([o for o in bpy.data.objects if o.type == 'ARMATURE'])
+    if not rigged:
         if not height: raise SystemExit('unrigged mesh: set height in FIGHTERS')
         ob = max((o for o in bpy.data.objects if o.type == 'MESH'), key=lambda o: len(o.data.vertices))
         automix.fit_height(ob, height)
         automix.build(ob, height, name)
     arm = [o for o in bpy.data.objects if o.type == 'ARMATURE'][0]
+    if any(abs(s - 1) > 1e-4 for s in arm.scale):
+        # Meshy rigs import at 0.01 scale (cm armature); set_world_rot assumes a unit-scale armature,
+        # otherwise every posed bone comes out 100x. Bake the scale into armature + skinned meshes.
+        for o in bpy.context.selected_objects: o.select_set(False)
+        for o in [arm] + [c for c in arm.children_recursive if c.type == 'MESH']: o.select_set(True)
+        bpy.context.view_layer.objects.active = arm
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+        print('MESHY rig scale applied')
+    mixamo_names(arm)
+    meshes = [o for o in bpy.data.objects if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers)]
+    if rigged: fix_hand_weights(arm, meshes, drop_at=hand_drop)   # Meshy-rigged (arms-down) models only; automix rigs are A-pose
     meshes = [o for o in bpy.data.objects if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers)]
     for o in bpy.data.objects:
         if o.type == 'MESH' and o not in meshes: o.hide_render = True; o.hide_viewport = True
@@ -386,7 +480,7 @@ def main():
     moves = dict(MOVES); moves.update(spec.get('moves', {}))
     os.makedirs(outdir, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    arm, meshes = load_target(glb, spec.get('height'), name)
+    arm, meshes = load_target(glb, spec.get('height'), name, spec.get('hand_drop', 0.95))
     vz = [(ob.matrix_world @ v.co).z for ob in meshes for v in ob.data.vertices]
     H = max(vz) - min(vz)
     ref = clip('jab_cross')
