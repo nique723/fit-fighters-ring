@@ -82,7 +82,22 @@ export const CONFIG = {
       height: 1.75, canvas: [480, 560], anchor: [0.4, 0.9739],
       stats: { handSpeed: 10, footwork: 8, power: 3, reach: 3, chin: 2, engine: 7, guard: 1, experience: 6 },
       // as the opponent: in-and-out combos, quick one-twos, stays moving
-      ai: { punches: { jab: 1.4, cross: 1.4, hook: 0.9, body: 0.8 }, circle: 1.4, range: 5 } }
+      ai: { punches: { jab: 1.4, cross: 1.4, hook: 0.9, body: 0.8 }, circle: 1.4, range: 5 } },
+    // 6'0" orthodox power puncher with a big engine and clean mechanics for one year in. Average
+    // hands and feet. The cost: defense hasn't caught up (guard 3, chin 4) and little ring IQ, so
+    // he walks into counters. Make him miss, then pot-shot him as he resets.
+    { id: 'lj', hero: true, name: 'LJ', trait: 'Power · big engine · good mechanics', mocap: true,
+      height: 1.83, canvas: [480, 584], anchor: [0.4, 0.9748],
+      stats: { handSpeed: 5, footwork: 5, power: 8, reach: 5, chin: 4, engine: 7, guard: 3, experience: 3 },
+      // as the opponent: steady pressure, loads the right hand and hook, digs to the body
+      ai: { punches: { jab: 0.9, cross: 1.5, hook: 1.4, body: 1.2 }, circle: 0.7, range: -15 } },
+    // Tyshon "Jersey": 6'0" out-boxer with long arms, quick hands and good feet, three years in.
+    // The cost: no gas tank (engine 2) and light power. Pressure him; he fades late in rounds.
+    { id: 'jersey', hero: true, name: 'JERSEY', trait: 'Long reach · quick hands · footwork', mocap: true,
+      height: 1.83, canvas: [480, 584], anchor: [0.4, 0.9748],
+      stats: { handSpeed: 7, footwork: 8, power: 3, reach: 8, chin: 4, engine: 2, guard: 3, experience: 5 },
+      // as the opponent: long jab, circles off the line, keeps you at the end of his reach
+      ai: { punches: { jab: 1.7, cross: 1.2, hook: 0.5, body: 0.7 }, circle: 1.5, range: 25 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {
