@@ -92,6 +92,11 @@ FIGHTERS = {
     'lamar': dict(height=1.80, glove_model='gloves/fight_glove.glb',
                   glove_colors={'main': (0.50, 0.025, 0.035), 'accent': (0.03, 0.03, 0.03)},
                   glove=(0.42, 0.015, 0.025, 1), cuff=(0.02, 0.02, 0.02, 1), moves={}),
+    # pink body + black thumb: matches the pink trim on her tank and her black training gloves.
+    # Meshy-rigged A-pose at 1.56 m in the file; fit=True scales it to her real 5'5".
+    'kelly': dict(height=1.65, fit=True, glove_model='gloves/fight_glove.glb',
+                  glove_colors={'main': (0.85, 0.16, 0.42), 'accent': (0.03, 0.03, 0.03), 'main_metal': 0.0, 'accent_metal': 0.0},
+                  glove=(0.85, 0.16, 0.42, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
     # teal body + metallic gold thumb: matches his mint boxing shoes and the gold logo on his gray tank.
     # Meshy-rigged (arms-down photos): pass the rigged GLB; height is only a note here.
     'lj': dict(height=1.83, glove_model='gloves/fight_glove.glb',
@@ -258,7 +263,7 @@ def fix_hand_weights(arm, meshes, radius=0.07, reach=0.22, drop_at=0.95):
         print('MESHY rig stripped stray hand/forearm weight from verts:', fixed)
 
 
-def load_target(glb, height=None, name='fighter', hand_drop=0.95):
+def load_target(glb, height=None, name='fighter', hand_drop=0.95, fit=False):
     bpy.ops.import_scene.gltf(filepath=glb)
     rigged = bool([o for o in bpy.data.objects if o.type == 'ARMATURE'])
     if not rigged:
@@ -275,6 +280,18 @@ def load_target(glb, height=None, name='fighter', hand_drop=0.95):
         bpy.context.view_layer.objects.active = arm
         bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
         print('MESHY rig scale applied')
+    if rigged and fit and height:
+        # rigged models keep their file size; fit=True scales the rig + skin to the real height
+        bpy.context.view_layer.update()
+        sk = [o for o in arm.children_recursive if o.type == 'MESH']
+        zs = [(o.matrix_world @ v.co).z for o in sk for v in o.data.vertices]
+        k = height / (max(zs) - min(zs))
+        arm.scale = (k, k, k)
+        for o in bpy.context.selected_objects: o.select_set(False)
+        for o in [arm] + sk: o.select_set(True)
+        bpy.context.view_layer.objects.active = arm
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+        print('RIG scaled to height', height, 'x', round(k, 3))
     mixamo_names(arm)
     meshes = [o for o in bpy.data.objects if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers)]
     if rigged: fix_hand_weights(arm, meshes, drop_at=hand_drop)   # Meshy-rigged (arms-down) models only; automix rigs are A-pose
@@ -480,7 +497,7 @@ def main():
     moves = dict(MOVES); moves.update(spec.get('moves', {}))
     os.makedirs(outdir, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    arm, meshes = load_target(glb, spec.get('height'), name, spec.get('hand_drop', 0.95))
+    arm, meshes = load_target(glb, spec.get('height'), name, spec.get('hand_drop', 0.95), spec.get('fit', False))
     vz = [(ob.matrix_world @ v.co).z for ob in meshes for v in ob.data.vertices]
     H = max(vz) - min(vz)
     ref = clip('jab_cross')

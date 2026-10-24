@@ -97,7 +97,15 @@ export const CONFIG = {
       height: 1.83, canvas: [480, 584], anchor: [0.4, 0.9748],
       stats: { handSpeed: 7, footwork: 8, power: 3, reach: 8, chin: 4, engine: 2, guard: 3, experience: 5 },
       // as the opponent: long jab, circles off the line, keeps you at the end of his reach
-      ai: { punches: { jab: 1.7, cross: 1.2, hook: 0.5, body: 0.7 }, circle: 1.5, range: 25 } }
+      ai: { punches: { jab: 1.7, cross: 1.2, hook: 0.5, body: 0.7 }, circle: 1.5, range: 25 } },
+    // 5'5", eight years in: the most experienced fighter on the roster, quick feet, quick hands and
+    // a big motor. The cost: little power, the shortest reach, and a light chin and guard, so she
+    // wins on volume and ring IQ, not one shot. Walk her down and land something heavy.
+    { id: 'kelly', hero: true, name: 'KELLY', trait: 'Experience · quick hands & feet · engine', mocap: true,
+      height: 1.65, canvas: [480, 528], anchor: [0.4, 0.9726],
+      stats: { handSpeed: 8, footwork: 8, power: 2, reach: 2, chin: 2, engine: 8, guard: 2, experience: 8 },
+      // as the opponent: busy jab-to-body work, circles out, rarely stands still
+      ai: { punches: { jab: 1.6, cross: 1.1, hook: 0.7, body: 1.2 }, circle: 1.6, range: 5 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {

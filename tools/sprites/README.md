@@ -52,6 +52,7 @@ vertices some hand weight, and they stretch into strands from glove to waist onc
 forearm weight is stripped from vertices more than 7 cm from the elbow-to-fingertip line; vertices that were
 all hand (stray finger bits) are deleted. Known limit: an arms-down mesh joins arm and torso at the armpit,
 so loose shirts web a little on extended punches. A Meshy A-pose build avoids it. Used by LJ and Jersey.
+Rigged models keep their file size; set `fit=True` with `height` to scale rig + skin to the real height (Kelly).
 
 **Gloves** — `gloves/fight_glove.glb`: a textured lace-up fight glove built in Meshy (multi-image-to-3d, task
 `01a157a6-977a-77fe-955c-398fa258fba5`) from AI reference views, cut from 1.4M to 150k faces (lower than that
