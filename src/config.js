@@ -105,7 +105,15 @@ export const CONFIG = {
       height: 1.65, canvas: [480, 528], anchor: [0.4, 0.9726],
       stats: { handSpeed: 8, footwork: 8, power: 2, reach: 2, chin: 2, engine: 8, guard: 2, experience: 8 },
       // as the opponent: busy jab-to-body work, circles out, rarely stands still
-      ai: { punches: { jab: 1.6, cross: 1.1, hook: 0.7, body: 1.2 }, circle: 1.6, range: 5 } }
+      ai: { punches: { jab: 1.6, cross: 1.1, hook: 0.7, body: 1.2 }, circle: 1.6, range: 5 } },
+    // Tiffany "TIP": 5'7", seven years in. Quick hands with real pop behind them and a big motor.
+    // The cost: average feet, short reach, light chin, and the hands drop when she lets them go.
+    // Don't trade with her; make her chase, then counter when she opens up.
+    { id: 'tiffany', hero: true, name: 'TIFFANY "TIP"', trait: 'Quick hands · power · experience · engine', mocap: true,
+      height: 1.70, canvas: [480, 544], anchor: [0.4, 0.9733],
+      stats: { handSpeed: 7, footwork: 5, power: 6, reach: 3, chin: 3, engine: 7, guard: 2, experience: 7 },
+      // as the opponent: comes forward in combinations, one-two into the hook
+      ai: { punches: { jab: 1.1, cross: 1.4, hook: 1.4, body: 1.0 }, circle: 0.9, range: -10 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {

@@ -97,6 +97,11 @@ FIGHTERS = {
     'kelly': dict(height=1.65, fit=True, glove_model='gloves/fight_glove.glb',
                   glove_colors={'main': (0.85, 0.16, 0.42), 'accent': (0.03, 0.03, 0.03), 'main_metal': 0.0, 'accent_metal': 0.0},
                   glove=(0.85, 0.16, 0.42, 1), cuff=(0.03, 0.03, 0.03, 1), moves={}),
+    # purple body + rose-gold thumb: pops on her white tank, picks up her pink shoes/wrap, and never
+    # matches Kelly's pink in the same ring. Meshy-rigged A-pose at 1.61 m; fit=True -> her real 5'7".
+    'tiffany': dict(height=1.70, fit=True, glove_model='gloves/fight_glove.glb',
+                    glove_colors={'main': (0.40, 0.10, 0.60), 'accent': (0.95, 0.55, 0.62), 'main_metal': 0.0, 'accent_metal': 1.0},
+                    glove=(0.40, 0.10, 0.60, 1), cuff=(0.95, 0.55, 0.62, 1), moves={}),
     # teal body + metallic gold thumb: matches his mint boxing shoes and the gold logo on his gray tank.
     # Meshy-rigged (arms-down photos): pass the rigged GLB; height is only a note here.
     'lj': dict(height=1.83, glove_model='gloves/fight_glove.glb',
