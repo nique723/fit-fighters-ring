@@ -108,8 +108,23 @@ def joints(ob, H):
             if len(s) < 4: continue
             # keep the arm, not the torso, when they overlap: take the highest cluster's band
             xs.append(x); ys.append((s[:, 1].min() + s[:, 1].max()) / 2); zs.append((s[:, 2].min() + s[:, 2].max()) / 2)
-        az, bz = np.polyfit(xs, zs, 1); ay, by = np.polyfit(xs, ys, 1)
-        P = lambda x: Vector((side * x, ay * x + by, az * x + bz))
+        if len(xs) >= 4:
+            az, bz = np.polyfit(xs, zs, 1); ay, by = np.polyfit(xs, ys, 1)
+            P = lambda x, ay=ay, by=by, az=az, bz=bz: Vector((side * x, ay * x + by, az * x + bz))
+        else:
+            # steep A-pose (arms hang close to the body): too few side slabs. Slice the arm top to
+            # bottom instead, between wrist and shoulder height; the arm is the outermost band of each
+            # slice. Fit x(z), y(z), then express the line in x like the wide case.
+            zs, xs, ys = [], [], []
+            for z in np.arange(0.53 * H, 0.77 * H, 0.01 * H):
+                s = arm[np.abs(arm[:, 2] - z) < 0.005 * H]
+                if len(s) < 4: continue
+                out = s[s[:, 0] * side > (s[:, 0] * side).max() - 0.055 * H]
+                zs.append(z); xs.append((out[:, 0] * side).mean()); ys.append(out[:, 1].mean())
+            ax_, bx_ = np.polyfit(zs, xs, 1); ayz, byz = np.polyfit(zs, ys, 1)
+            print('AUTORIG steep arms (%s): fitted top-down on %d slices' % (s_, len(zs)))
+            zof = lambda x, ax_=ax_, bx_=bx_: (x - bx_) / ax_
+            P = lambda x, zof=zof, ayz=ayz, byz=byz: Vector((side * x, ayz * zof(x) + byz, zof(x)))
         sh_x = 0.108 * H
         tip = arm[np.argmax(arm[:, 0] * side)]
         dirv = (P(xmax) - P(sh_x)).normalized()

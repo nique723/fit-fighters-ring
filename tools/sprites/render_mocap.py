@@ -102,6 +102,12 @@ FIGHTERS = {
     'tiffany': dict(height=1.70, fit=True, glove_model='gloves/fight_glove.glb',
                     glove_colors={'main': (0.40, 0.10, 0.60), 'accent': (0.95, 0.55, 0.62), 'main_metal': 0.0, 'accent_metal': 1.0},
                     glove=(0.40, 0.10, 0.60, 1), cuff=(0.95, 0.55, 0.62, 1), moves={}),
+    # royal blue body + orange thumb: echoes her orange shoes, pops on her gray tank, and stays clear
+    # of Tiffany's purple. Built in Meshy (multi-image-to-3d) from Tripo turntable frames; unrigged,
+    # A-pose -> automix rigs it at her real 5'7".
+    'dominique': dict(height=1.70, glove_model='gloves/fight_glove.glb',
+                      glove_colors={'main': (0.06, 0.22, 0.78), 'accent': (0.95, 0.42, 0.05), 'main_metal': 0.0, 'accent_metal': 0.0},
+                      glove=(0.06, 0.22, 0.78, 1), cuff=(0.95, 0.42, 0.05, 1), moves={}),
     # teal body + metallic gold thumb: matches his mint boxing shoes and the gold logo on his gray tank.
     # Meshy-rigged (arms-down photos): pass the rigged GLB; height is only a note here.
     'lj': dict(height=1.83, glove_model='gloves/fight_glove.glb',
@@ -508,11 +514,23 @@ def main():
     ref = clip('jab_cross')
     k_hip = head_w(arm, M + 'Hips', rest=True).z / ref.rest_head(M + 'Hips').z
     print('HEIGHT', round(H, 3))
+    # Skin/cloth specular. glTF imports at 0.5, which under the overhead ring key reflects like polish:
+    # faces and arms wash out to near-white (worst on darker skin). 0.1 keeps real skin tone.
+    # Body meshes only; gloves get their own material below. FIGHTERS[id]['spec'] overrides.
+    for o in meshes:
+        for m in o.data.materials:
+            bs = m and m.use_nodes and m.node_tree.nodes.get('Principled BSDF')
+            if bs: bs.inputs['Specular IOR Level'].default_value = spec.get('spec', 0.1)
     if spec.get('glove_model'): add_model_gloves(arm, meshes, spec, H)
     else: add_gloves(arm, spec['glove'], spec['cuff'], H / 1.75)
     meshes = [o for o in mats_meshes() if o.parent_type != 'BONE']   # floor check: body only
 
     scene_util.light_rig()
+    # colour pipeline overrides for look tests: VIEW=Standard|AgX, LOOK='AgX - Punchy', EXPOSURE=-0.3
+    vs = bpy.context.scene.view_settings
+    if os.environ.get('VIEW'): vs.view_transform = os.environ['VIEW']
+    if os.environ.get('LOOK'): vs.look = os.environ['LOOK']
+    if os.environ.get('EXPOSURE'): vs.exposure = float(os.environ['EXPOSURE'])
     # 240 px/m like every fighter. Canvas grows with height so a raised glove (victory) fits:
     # 1.68 m -> the standard 480x504; taller fighters get a taller canvas and their own anchor.
     RW = 480
