@@ -113,7 +113,15 @@ export const CONFIG = {
       height: 1.70, canvas: [480, 544], anchor: [0.4, 0.9733],
       stats: { handSpeed: 7, footwork: 5, power: 6, reach: 3, chin: 3, engine: 7, guard: 2, experience: 7 },
       // as the opponent: comes forward in combinations, one-two into the hook
-      ai: { punches: { jab: 1.1, cross: 1.4, hook: 1.4, body: 1.0 }, circle: 0.9, range: -10 } }
+      ai: { punches: { jab: 1.1, cross: 1.4, hook: 1.4, body: 1.0 }, circle: 0.9, range: -10 } },
+    // 5'7", six years in: the best feet on the roster, quick hands with power behind them. The cost:
+    // no gas tank (engine 2), so long exchanges drain her and she fades late in rounds. Short reach,
+    // light chin. Make her work every second of the round, then go to the body.
+    { id: 'dominique', hero: true, name: 'DOMINIQUE', trait: 'Elite footwork · quick hands · power', mocap: true,
+      height: 1.70, canvas: [480, 544], anchor: [0.4, 0.9733],
+      stats: { handSpeed: 7, footwork: 9, power: 6, reach: 3, chin: 3, engine: 2, guard: 4, experience: 6 },
+      // as the opponent: in and out on her feet, quick one-twos, picks her moments to save gas
+      ai: { punches: { jab: 1.3, cross: 1.4, hook: 1.0, body: 0.8 }, circle: 1.7, range: 10 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {

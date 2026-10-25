@@ -99,5 +99,9 @@ export class FighterSelect {
         <div class="sl-grid">${cards}</div>
         <button type="button" class="sl-go" data-act="go">Walk out</button>
       </div>`;
+    // when the roster outgrows the row (small phones), keep the fighter being picked in view
+    const cur = this.el.querySelector(this.slot === 'player' ? '.sl-card.you' : '.sl-card.opp');
+    const grid = this.el.querySelector('.sl-grid');
+    if (cur && grid.scrollWidth > grid.clientWidth) grid.scrollLeft = cur.offsetLeft - (grid.clientWidth - cur.offsetWidth) / 2;
   }
 }
