@@ -203,8 +203,8 @@
       .sl-row b { display: block; height: 100%; }
       /* one row on every screen: cards shrink to fit the roster and only scroll sideways past ~12
          (a wrapped second row ends up under the sticky WALK OUT button) */
-      .sl-grid { display: flex; gap: 8px; justify-content: safe center; flex-wrap: nowrap; overflow-x: auto; padding: 2px; }
-      .sl-card { position: relative; flex: 1 1 0; min-width: 64px; max-width: 92px; container-type: inline-size; padding: 0 0 6px; border-radius: 10px; border: 2px solid rgba(255,255,255,.14); background: rgba(16,20,28,.9); color: #edf2f7; overflow: hidden; text-align: center; }
+      .sl-grid { display: flex; gap: 6px; justify-content: safe center; flex-wrap: nowrap; overflow-x: auto; padding: 2px; }
+      .sl-card { position: relative; flex: 1 1 0; min-width: 60px; max-width: 92px; container-type: inline-size; padding: 0 0 6px; border-radius: 10px; border: 2px solid rgba(255,255,255,.14); background: rgba(16,20,28,.9); color: #edf2f7; overflow: hidden; text-align: center; }
       .sl-card.you { border-color: #f6e05e; } .sl-card.opp { border-color: #fc8181; }
       .sl-pic { --ph: 76px; position: relative; height: var(--ph); background: #1a202c; overflow: hidden; }
       .sl-pic img { position: absolute; width: auto; max-width: none; }
@@ -221,7 +221,7 @@
         .sl-big { padding: 6px 6px 8px; } .sl-bigpic { --ph: 118px; } .sl-big b { font-size: 15px; } .sl-big small { display: none; }
         .sl-vs { font-size: 24px; } .sl-mid { gap: 4px; }
         .sl-compare { padding: 6px 8px; gap: 2px; } .sl-row { grid-template-columns: 14px 1fr 70px 1fr 14px; gap: 5px; } .sl-row span { font-size: 9px; }
-        .sl-grid { gap: 4px; } .sl-card { min-width: 46px; max-width: 70px; } .sl-pic { --ph: 54px; }
+        .sl-grid { gap: 3px; } .sl-card { min-width: 44px; max-width: 70px; } .sl-pic { --ph: 54px; }
         /* phones have no Impact; the fallback is wider, so the name scales with the card */
         .sl-card b { font-size: min(9px, 14.5cqw); letter-spacing: 0; padding: 0 1px; }
         .sl-go { height: 40px; min-width: 190px; font-size: 15px; bottom: 6px; }
