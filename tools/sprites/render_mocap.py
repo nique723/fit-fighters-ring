@@ -113,6 +113,11 @@ FIGHTERS = {
     'jersey': dict(height=1.83, hand_drop=0.6, glove_model='gloves/fight_glove.glb',
                    glove_colors={'main': (0.03, 0.03, 0.035), 'accent': (0.78, 0.05, 0.06), 'main_metal': 0.0, 'accent_metal': 1.0},
                    glove=(0.03, 0.03, 0.035, 1), cuff=(0.78, 0.05, 0.06, 1), moves={}),
+    # Stacy: white body + metallic red thumb so the gloves read against her all-red kit with the guard up.
+    # Meshy-rigged A-pose (multi-image-to-3d -> remesh 150k -> rigging at 1.70 m); fit=True -> her real 5'6".
+    'stacy': dict(height=1.68, fit=True, arm_clean=True, glove_model='gloves/fight_glove.glb',
+                  glove_colors={'main': (0.90, 0.90, 0.92), 'accent': (0.78, 0.05, 0.06), 'main_metal': 0.0, 'accent_metal': 1.0},
+                  glove=(0.90, 0.90, 0.92, 1), cuff=(0.78, 0.05, 0.06, 1), moves={}),
 }
 
 M = 'mixamorig:'
@@ -268,7 +273,88 @@ def fix_hand_weights(arm, meshes, radius=0.07, reach=0.22, drop_at=0.95):
         print('MESHY rig stripped stray hand/forearm weight from verts:', fixed)
 
 
-def load_target(glb, height=None, name='fighter', hand_drop=0.95, fit=False):
+def fix_upper_arm_weights(arm, meshes, k_lo=1.15, k_hi=1.7, sh_lo=0.06, sh_hi=0.12, hip_lo=0.02, hip_hi=0.09):
+    """Meshy skins torso verts under the armpit (a sports bra's band and side panel) with upper-arm
+    weight. On a jab or hook they follow the arm and the top webs to it. Measure this model's upper-arm
+    radius from the verts that are almost all upper arm, then fade upper-arm weight out between
+    k_lo and k_hi times that radius from the shoulder-to-elbow line; the freed share goes to the bones the
+    vertex already had (or the nearest spine bone). Opt in per fighter with arm_clean=True."""
+    from mathutils.geometry import intersect_point_line
+    mw = arm.matrix_world
+    segs = {s_: (mw @ arm.data.bones[M + s_ + 'Arm'].head_local, mw @ arm.data.bones[M + s_ + 'ForeArm'].head_local)
+            for s_ in ('Left', 'Right')}
+    spine = [b for b in arm.data.bones if 'Spine' in b.name]
+    def dist(p, s_):
+        a_, b_ = segs[s_]; q, t = intersect_point_line(p, a_, b_)
+        return (p - (a_ if t < 0 else b_ if t > 1 else q)).length
+    for ob in meshes:
+        vg = ob.vertex_groups
+        ua = {g.index: s_ for g in vg for s_ in ('Left', 'Right') if g.name == M + s_ + 'Arm'}
+        core = {'Left': [], 'Right': []}
+        for v in ob.data.vertices:
+            tot = sum(g.weight for g in v.groups) or 1.0
+            for g in v.groups:
+                if g.group in ua and g.weight / tot > 0.9: core[ua[g.group]].append(dist(ob.matrix_world @ v.co, ua[g.group]))
+        rad = {s_: sorted(d)[int(len(d) * 0.9)] if d else 0.06 for s_, d in core.items()}
+        print('UPPER ARM radius (m):', {k: round(v, 3) for k, v in rad.items()})
+        n = 0
+        for v in ob.data.vertices:
+            hits = [(g.group, g.weight) for g in v.groups if g.group in ua and g.weight > 0]
+            if not hits: continue
+            p = ob.matrix_world @ v.co
+            for gi, w in hits:
+                r = rad[ua[gi]]; d = dist(p, ua[gi])
+                f = 1.0 if d <= r * k_lo else 0.0 if d >= r * k_hi else (r * k_hi - d) / (r * (k_hi - k_lo))
+                if f >= 1.0: continue
+                if f <= 0.0: vg[gi].remove([v.index])
+                else: vg[gi].add([v.index], w * f, 'REPLACE')
+                n += 1
+            if not [g for g in v.groups if g.weight > 0]:
+                nb = min(spine, key=lambda bb: (p - mw @ ((bb.head_local + bb.tail_local) / 2)).length)
+                (vg.get(nb.name) or vg.new(name=nb.name)).add([v.index], 1.0, 'REPLACE')
+        print('UPPER ARM weight faded on torso verts:', n)
+        # shoulder (clavicle) weight on the chest: a punch rolls the shoulder forward and drags the top's
+        # cups/band along. Full weight down to drop_lo below the shoulder joint, none below drop_hi.
+        sh = {g.index: s_ for g in vg for s_ in ('Left', 'Right') if g.name == M + s_ + 'Shoulder'}
+        m = 0
+        for v in ob.data.vertices:
+            hits = [(g.group, g.weight) for g in v.groups if g.group in sh and g.weight > 0]
+            if not hits: continue
+            p = ob.matrix_world @ v.co
+            for gi, w in hits:
+                s_ = sh[gi]; a_ = segs[s_][0]
+                if dist(p, s_) <= rad[s_] * k_lo: continue          # the arm itself keeps it
+                drop = a_.z - p.z
+                f = 1.0 if drop <= sh_lo else 0.0 if drop >= sh_hi else (sh_hi - drop) / (sh_hi - sh_lo)
+                if f >= 1.0: continue
+                if f <= 0.0: vg[gi].remove([v.index])
+                else: vg[gi].add([v.index], w * f, 'REPLACE')
+                m += 1
+            if not [g for g in v.groups if g.weight > 0]:
+                nb = min(spine, key=lambda bb: (p - mw @ ((bb.head_local + bb.tail_local) / 2)).length)
+                (vg.get(nb.name) or vg.new(name=nb.name)).add([v.index], 1.0, 'REPLACE')
+        print('SHOULDER weight faded on chest verts:', m)
+        # hips weight above the waist: the top's band stays with the pelvis while the chest twists into a
+        # punch, so it shears. Fade it out from hip_lo to hip_hi above the Spine joint, freed share to Spine.
+        hz = (mw @ arm.data.bones[M + 'Spine'].head_local).z
+        hg = vg.get(M + 'Hips'); sg = vg.get(M + 'Spine') or vg.new(name=M + 'Spine')
+        h = 0
+        if hg:
+            for v in ob.data.vertices:
+                w = next((g.weight for g in v.groups if g.group == hg.index), 0.0)
+                if w <= 0: continue
+                up = (ob.matrix_world @ v.co).z - hz
+                f = 1.0 if up <= hip_lo else 0.0 if up >= hip_hi else (hip_hi - up) / (hip_hi - hip_lo)
+                if f >= 1.0: continue
+                sw = next((g.weight for g in v.groups if g.group == sg.index), 0.0)
+                sg.add([v.index], sw + w * (1 - f), 'REPLACE')
+                if f <= 0.0: hg.remove([v.index])
+                else: hg.add([v.index], w * f, 'REPLACE')
+                h += 1
+        print('HIPS weight moved to spine on torso verts:', h)
+
+
+def load_target(glb, height=None, name='fighter', hand_drop=0.95, fit=False, arm_clean=False):
     bpy.ops.import_scene.gltf(filepath=glb)
     rigged = bool([o for o in bpy.data.objects if o.type == 'ARMATURE'])
     if not rigged:
@@ -300,6 +386,7 @@ def load_target(glb, height=None, name='fighter', hand_drop=0.95, fit=False):
     mixamo_names(arm)
     meshes = [o for o in bpy.data.objects if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers)]
     if rigged: fix_hand_weights(arm, meshes, drop_at=hand_drop)   # Meshy-rigged (arms-down) models only; automix rigs are A-pose
+    if rigged and arm_clean: fix_upper_arm_weights(arm, meshes)    # tops that web to the arm on punches (Stacy)
     meshes = [o for o in bpy.data.objects if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers)]
     for o in bpy.data.objects:
         if o.type == 'MESH' and o not in meshes: o.hide_render = True; o.hide_viewport = True
@@ -502,7 +589,7 @@ def main():
     moves = dict(MOVES); moves.update(spec.get('moves', {}))
     os.makedirs(outdir, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    arm, meshes = load_target(glb, spec.get('height'), name, spec.get('hand_drop', 0.95), spec.get('fit', False))
+    arm, meshes = load_target(glb, spec.get('height'), name, spec.get('hand_drop', 0.95), spec.get('fit', False), spec.get('arm_clean', False))
     vz = [(ob.matrix_world @ v.co).z for ob in meshes for v in ob.data.vertices]
     H = max(vz) - min(vz)
     ref = clip('jab_cross')

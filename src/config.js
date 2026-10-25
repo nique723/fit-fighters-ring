@@ -113,7 +113,16 @@ export const CONFIG = {
       height: 1.70, canvas: [480, 544], anchor: [0.4, 0.9733],
       stats: { handSpeed: 7, footwork: 5, power: 6, reach: 3, chin: 3, engine: 7, guard: 2, experience: 7 },
       // as the opponent: comes forward in combinations, one-two into the hook
-      ai: { punches: { jab: 1.1, cross: 1.4, hook: 1.4, body: 1.0 }, circle: 0.9, range: -10 } }
+      ai: { punches: { jab: 1.1, cross: 1.4, hook: 1.4, body: 1.0 }, circle: 0.9, range: -10 } },
+    // Stacy: 5'6", 125 lbs, the lightest fighter on the roster. Quick hands, quick feet, the biggest
+    // motor in the gym, real pop, and she always comes forward. The cost: no chin (chin 1), a low
+    // guard and a short reach. Kelly and KD circle out; Stacy runs you down. Stand your ground, make
+    // her walk into the counter, and one clean shot changes the fight.
+    { id: 'stacy', hero: true, name: 'STACY', trait: 'Aggressive · quick hands & feet · engine', mocap: true,
+      height: 1.68, canvas: [480, 544], anchor: [0.4, 0.9733],
+      stats: { handSpeed: 8, footwork: 8, power: 5, reach: 3, chin: 1, engine: 9, guard: 2, experience: 4 },
+      // as the opponent: presses forward in combinations, one-two into the hook and the body
+      ai: { punches: { jab: 1.0, cross: 1.4, hook: 1.4, body: 1.1 }, circle: 0.6, range: -20 } }
   ],
   // What one rating point is worth. handSpeed 9 = punches 24% quicker; power 3 = 16% less damage.
   ratings: {
